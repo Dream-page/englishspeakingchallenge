@@ -37,26 +37,54 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useCallback, useRef } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Grape } from 'lucide-react';
+        import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Grape, Highlighter, StickyNote, Database } from 'lucide-react';
         import { initializeApp } from 'firebase/app';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
         // --- Firebase Configuration (배포용 실제 키 적용) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyDi1i0_5PxnWxg-7NrDtwPaIOr_WNplSSk",
-            authDomain: "self-improvement-aa934.firebaseapp.com",
-            projectId: "self-improvement-aa934",
-            storageBucket: "self-improvement-aa934.firebasestorage.app",
-            messagingSenderId: "141457601477",
-            appId: "1:141457601477:web:5f81c11d0f1dff8384d1ac",
-            measurementId: "G-HS8HFK7YMQ"
+        // 🚀 [배포 가이드] 아래 설정을 본인의 Firebase 키로 교체하세요!
+        // 지금은 미리보기 환경이므로 __firebase_config를 사용하지만, 
+        // 실제 파일에서는 아래와 같이 본인의 키를 직접 입력해야 합니다.
+        
+        /* const firebaseConfig = {
+            apiKey: "AIzaSy...", 
+            authDomain: "...",
+            // ... 나머지 설정
         };
+        */
+
+        // (주의: 캔버스 환경 호환을 위한 코드입니다. 배포시에는 위와 같이 본인 키를 직접 넣으세요.)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDi1i0_5PxnWxg-7NrDtwPaIOr_WNplSSk",
+                authDomain: "self-improvement-aa934.firebaseapp.com",
+                projectId: "self-improvement-aa934",
+                storageBucket: "self-improvement-aa934.firebasestorage.app",
+                messagingSenderId: "141457601477",
+                appId: "1:141457601477:web:5f81c11d0f1dff8384d1ac",
+                measurementId: "G-HS8HFK7YMQ"
+            };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'english-challenge-app'; // 앱 ID 고정
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-challenge-app';
+
+        // --- Day Topics Mapping (주제 목록) ---
+        const dayTopics = {
+            46: "데이트통장 찬성 vs 반대",
+            47: "과제 미리 하기 vs 벼락치기",
+            48: "결혼은 필수다 vs 아니다",
+            49: "남녀 사이에 친구가 가능하다 vs 불가능하다",
+            50: "온라인 쇼핑 vs 오프라인 쇼핑",
+            51: "주4일제라면? 수공강 vs 금공강",
+            52: "AI 번역기 있는데 영어공부 필요할까?",
+            53: "공부는 조용한 도서관 vs 백색소음 카페",
+            54: "뜻이 달라지는 헷갈리는 부사들",
+            55: "숫자와 단위 영어로 말하기"
+        };
 
         // --- Preloaded Data (Day 46 ~ 55) ---
         const preloadedData = {
@@ -182,6 +210,9 @@
             const [notes, setNotes] = useState([]);
             const [completedDates, setCompletedDates] = useState([]);
             
+            // --- Tab State ---
+            const [activeTab, setActiveTab] = useState('challenge'); // 'challenge' | 'notes'
+
             const [timeLeft, setTimeLeft] = useState(3600);
             const [isActive, setIsActive] = useState(false);
             const [targetTime] = useState(3600);
@@ -196,7 +227,11 @@
 
             useEffect(() => {
                 const initAuth = async () => {
-                    await signInAnonymously(auth);
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 };
                 initAuth();
                 
@@ -208,6 +243,12 @@
                 });
                 return () => unsubscribe();
             }, []);
+
+            // 탭 변경 시 리셋
+            useEffect(() => {
+                setRevealedIndices([]);
+                setHideEnglish(false);
+            }, [activeTab, currentDay]);
 
             useEffect(() => {
                 if (!user) return;
@@ -313,6 +354,24 @@
                 saveDayData(newSentences, repetitionCount);
             };
 
+            const toggleHighlight = (index, isNote = false, noteId = null) => {
+                if (isNote) {
+                    const newNotes = notes.map(n => 
+                        n.id === noteId ? { ...n, highlight: !n.highlight } : n
+                    );
+                    setNotes(newNotes);
+                    saveGlobalData(newNotes, undefined, undefined);
+                } else {
+                    const newSentences = [...sentences];
+                    newSentences[index] = { 
+                        ...newSentences[index], 
+                        highlight: !newSentences[index].highlight 
+                    };
+                    setSentences(newSentences);
+                    saveDayData(newSentences, repetitionCount);
+                }
+            };
+
             const toggleRepetition = (index) => {
                 let newCount = index + 1;
                 if (repetitionCount === newCount) {
@@ -328,7 +387,8 @@
                         id: Date.now(), 
                         eng: newNoteEng, 
                         kor: newNoteKor,
-                        date: new Date().toLocaleDateString() 
+                        date: new Date().toLocaleDateString(),
+                        highlight: false
                     }, ...notes];
                     setNotes(newNoteList);
                     saveGlobalData(newNoteList, undefined, undefined);
@@ -523,100 +583,225 @@
                                     })}
                                 </div>
                             </div>
-
-                            {/* Inspo Notes */}
-                            <div className="bg-[#FFF1F2] rounded-[2rem] p-6 shadow-md border-2 border-[#FFE4E6]">
-                                <h3 className="font-bold text-[#BE123C] mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5" />Inspo Notes</h3>
-                                <div className="flex flex-col gap-2 mb-4">
-                                    <input type="text" value={newNoteEng} onChange={(e) => setNewNoteEng(e.target.value)} placeholder="English Expression..." className="w-full bg-white/50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-[#BE123C]"/>
-                                    <div className="flex gap-2">
-                                        <input type="text" value={newNoteKor} onChange={(e) => setNewNoteKor(e.target.value)} placeholder="Meaning..." className="flex-1 bg-white/50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-[#BE123C]"/>
-                                        <button onClick={addNote} className="bg-[#BE123C] text-white px-4 py-2 rounded-xl hover:bg-[#9F1239] transition-colors"><Plus size={20} /></button>
-                                    </div>
-                                </div>
-                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
-                                    {notes.length === 0 ? <p className="text-xs text-[#BE123C]/50 text-center py-4">No notes yet</p> : notes.map(note => (
-                                        <div key={note.id} className="group bg-white p-3 rounded-xl shadow-sm border border-[#FECDD3] flex justify-between items-center">
-                                            <div className="flex-1 min-w-0"><p className="text-sm font-bold text-slate-800 break-words">{note.eng}</p><p className="text-xs text-[#BE123C]/80 mt-1 break-words">{note.kor}</p></div>
-                                            <button onClick={() => deleteNote(note.id)} className="text-[#FDA4AF] hover:text-[#BE123C] opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"><Trash2 size={14} /></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
                         </div>
 
-                        {/* RIGHT COLUMN */}
+                        {/* RIGHT COLUMN (MAIN CONTENT) */}
                         <div className="lg:col-span-8">
                             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/50 min-h-full">
                                 
-                                {/* Header + Mode Toggle */}
+                                {/* TABS & Header */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><BookOpen className="w-6 h-6 text-[#7C3AED]" />Today's 10 Sentences</h2>
-                                        <p className="text-sm text-slate-500">{hideEnglish ? "Speaking Mode ON!" : `Day ${currentDay} Challenge`}</p>
+                                    <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                                        <button 
+                                            onClick={() => setActiveTab('challenge')}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'challenge' ? 'bg-white text-[#7C3AED] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            <BookOpen size={16} /> Day {currentDay} Challenge
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveTab('notes')}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'notes' ? 'bg-white text-[#BE123C] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            <Sparkles size={16} /> Inspo Notes
+                                        </button>
                                     </div>
-                                    <button onClick={() => setHideEnglish(!hideEnglish)} className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-[#7C3AED] text-white ring-4 ring-[#C4B5FD]' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
+
+                                    <button onClick={() => setHideEnglish(!hideEnglish)} className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-slate-800 text-white ring-4 ring-slate-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
                                         {hideEnglish ? <EyeOff size={18}/> : <Eye size={18}/>}
                                         {hideEnglish ? "Mode ON" : "Study Mode"}
                                     </button>
                                 </div>
 
-                                {/* Repetition Tracker (Grape/Bubbles) */}
-                                <div className="mb-8 p-6 bg-[#F5F3FF] rounded-2xl border border-[#DDD6FE]">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-bold text-[#5B21B6] flex items-center gap-2">
-                                            <span>🍇</span>
-                                            Repetition Check
-                                        </h3>
-                                        <span className="text-xs font-bold bg-white text-[#7C3AED] px-3 py-1 rounded-full shadow-sm">
-                                            {repetitionCount} / 10 Sets
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center px-2">
-                                        {[...Array(10)].map((_, i) => (
-                                            <div 
-                                                key={i}
-                                                onClick={() => toggleRepetition(i)}
-                                                className={`
-                                                    w-7 h-7 md:w-10 md:h-10 rounded-full border-2 cursor-pointer transition-all duration-300 flex items-center justify-center transform hover:scale-110
-                                                    ${i < repetitionCount 
-                                                        ? 'bg-purple-50 border-[#7C3AED] shadow-md' 
-                                                        : 'bg-white border-[#C4B5FD] border-dashed'
-                                                    }
-                                                `}
-                                            >
-                                                {i < repetitionCount ? <span className="text-lg md:text-2xl">🍇</span> : null}
+                                {/* CONTENT SWITCH */}
+                                {activeTab === 'challenge' ? (
+                                    <>
+                                        {/* Repetition Tracker (Grape/Bubbles) */}
+                                        <div className="mb-8 p-6 bg-[#F5F3FF] rounded-2xl border border-[#DDD6FE]">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="font-bold text-[#5B21B6] flex items-center gap-2">
+                                                    <span>🍇</span>
+                                                    Repetition Check
+                                                </h3>
+                                                <span className="text-xs font-bold bg-white text-[#7C3AED] px-3 py-1 rounded-full shadow-sm">
+                                                    {repetitionCount} / 10 Sets
+                                                </span>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-center text-xs text-[#8B5CF6] mt-4 font-medium">
-                                        10문장을 한 세트 다 말할 때마다 포도알을 하나씩 채워주세요! 🍇
-                                    </p>
-                                </div>
+                                            <div className="flex justify-between items-center px-2">
+                                                {[...Array(10)].map((_, i) => (
+                                                    <div 
+                                                        key={i}
+                                                        onClick={() => toggleRepetition(i)}
+                                                        className={`
+                                                            w-7 h-7 md:w-10 md:h-10 rounded-full border-2 cursor-pointer transition-all duration-300 flex items-center justify-center transform hover:scale-110
+                                                            ${i < repetitionCount 
+                                                                ? 'bg-purple-50 border-[#7C3AED] shadow-md' 
+                                                                : 'bg-white border-[#C4B5FD] border-dashed'
+                                                            }
+                                                        `}
+                                                    >
+                                                        {i < repetitionCount ? <span className="text-lg md:text-2xl">🍇</span> : null}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Topic Display Section */}
+                                            <div className="mt-6 text-center">
+                                                <div className="inline-block bg-white px-4 py-1 rounded-full border border-purple-100 shadow-sm mb-2">
+                                                    <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Today's Topic</span>
+                                                </div>
+                                                <h3 className="text-lg md:text-xl font-bold text-slate-700 break-keep">
+                                                    {dayTopics[currentDay] || "자유 주제 (Free Talk)"}
+                                                </h3>
+                                            </div>
+                                        </div>
 
-                                {/* Sentences List */}
-                                <div className="space-y-6">
-                                    {sentences.map((item, idx) => (
-                                        <div key={idx} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
-                                            <div className={`absolute -left-3 -top-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2">
-                                                <div className="relative flex flex-col">
-                                                    <label className={`text-xs font-bold mb-1 block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
-                                                    <div onClick={() => toggleReveal(idx)} className={`relative flex-1 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer ${hideEnglish && !revealedIndices.includes(idx) ? 'bg-slate-900' : 'bg-slate-50'}`}>
-                                                        <textarea value={item.eng} onChange={(e) => updateSentence(idx, 'eng', e.target.value)} placeholder={`Day ${currentDay} 문장 (영어)`} className={`w-full h-full bg-transparent border-none rounded-lg text-slate-800 font-bold text-lg p-3 focus:ring-0 outline-none resize-none transition-all duration-300 ${hideEnglish && !revealedIndices.includes(idx) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} rows={3} disabled={hideEnglish && !revealedIndices.includes(idx)} />
-                                                        {hideEnglish && !revealedIndices.includes(idx) && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="text-4xl animate-bounce">🙈</span></div>)}
+                                        {/* Sentences List */}
+                                        <div className="space-y-6">
+                                            {sentences.map((item, idx) => (
+                                                <div key={idx} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
+                                                    <div className={`absolute -left-3 -top-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2">
+                                                        <div className="relative flex flex-col">
+                                                            <div className="flex justify-between items-end mb-1">
+                                                                <label className={`text-xs font-bold block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
+                                                                <button 
+                                                                    onClick={() => toggleHighlight(idx)}
+                                                                    className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${item.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                                    title="어려운 문장 하이라이트"
+                                                                >
+                                                                    <Highlighter size={14} />
+                                                                </button>
+                                                            </div>
+                                                            
+                                                            <div 
+                                                                onClick={() => toggleReveal(idx)} 
+                                                                className={`relative flex-1 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer 
+                                                                    ${hideEnglish && !revealedIndices.includes(idx) ? 'bg-slate-900' : (item.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
+                                                                `}
+                                                            >
+                                                                <textarea 
+                                                                    value={item.eng} 
+                                                                    onChange={(e) => updateSentence(idx, 'eng', e.target.value)} 
+                                                                    placeholder={`Day ${currentDay} 문장 (영어)`} 
+                                                                    className={`w-full h-full bg-transparent border-none rounded-lg text-slate-800 font-bold text-lg p-3 focus:ring-0 outline-none resize-none transition-all duration-300 
+                                                                        ${hideEnglish && !revealedIndices.includes(idx) ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+                                                                    `} 
+                                                                    rows={3} 
+                                                                    disabled={hideEnglish && !revealedIndices.includes(idx)} 
+                                                                />
+                                                                {hideEnglish && !revealedIndices.includes(idx) && (
+                                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                        <span className="text-4xl">🙈</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-wider">Meaning</label>
+                                                            <div className="bg-slate-50 rounded-lg p-3 flex-1">
+                                                                <textarea value={item.kor} onChange={(e) => updateSentence(idx, 'kor', e.target.value)} placeholder="한국어 해석" className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none font-medium leading-relaxed" rows={3}/>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <label className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-wider">Meaning</label>
-                                                    <div className="bg-slate-50 rounded-lg p-3 flex-1">
-                                                        <textarea value={item.kor} onChange={(e) => updateSentence(idx, 'kor', e.target.value)} placeholder="한국어 해석" className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none font-medium leading-relaxed" rows={3}/>
-                                                    </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Inspo Notes Input Area */}
+                                        <div className="mb-8 p-6 bg-[#FFF1F2] rounded-2xl border border-[#FFE4E6]">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="font-bold text-[#BE123C] flex items-center gap-2">
+                                                    <StickyNote className="w-5 h-5"/>
+                                                    Add New Note
+                                                </h3>
+                                            </div>
+                                            <div className="flex flex-col gap-3">
+                                                <input 
+                                                    type="text" 
+                                                    value={newNoteEng} 
+                                                    onChange={(e) => setNewNoteEng(e.target.value)} 
+                                                    placeholder="English Expression (ex: That hits the spot!)" 
+                                                    className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-slate-800 font-medium"
+                                                />
+                                                <div className="flex gap-2">
+                                                    <input 
+                                                        type="text" 
+                                                        value={newNoteKor} 
+                                                        onChange={(e) => setNewNoteKor(e.target.value)} 
+                                                        placeholder="Meaning / Context (ex: 딱 내가 원하던 거야!)" 
+                                                        className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-slate-800"
+                                                    />
+                                                    <button 
+                                                        onClick={addNote} 
+                                                        className="bg-[#BE123C] text-white px-6 py-3 rounded-xl hover:bg-[#9F1239] transition-colors font-bold flex items-center gap-2"
+                                                    >
+                                                        <Plus size={20} /> Add
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
+
+                                        {/* Inspo Notes List (Card Style) */}
+                                        <div className="space-y-6">
+                                            {notes.length === 0 ? (
+                                                <div className="text-center py-12 text-slate-400">
+                                                    <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                                                    <p>아직 기록된 표현이 없어요.</p>
+                                                    <p className="text-sm mt-1">릴스나 미드에서 본 멋진 표현을 추가해보세요!</p>
+                                                </div>
+                                            ) : (
+                                                notes.map((note, idx) => (
+                                                    <div key={note.id} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#BE123C] shadow-lg shadow-pink-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#FECDD3]'}`}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <span className="text-[10px] font-bold text-[#BE123C] bg-[#FFF1F2] px-2 py-1 rounded-md">
+                                                                {note.date}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <button 
+                                                                    onClick={() => toggleHighlight(idx, true, note.id)}
+                                                                    className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${note.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                                >
+                                                                    <Highlighter size={14} />
+                                                                </button>
+                                                                <button onClick={() => deleteNote(note.id)} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-1">
+                                                            {/* English Part */}
+                                                            <div 
+                                                                onClick={() => toggleReveal(idx + 1000)} // Offset index to avoid conflict
+                                                                className={`relative rounded-lg overflow-hidden transition-all duration-300 cursor-pointer min-h-[80px] flex items-center p-3
+                                                                    ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'bg-slate-900' : (note.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
+                                                                `}
+                                                            >
+                                                                <p className={`text-lg font-bold text-slate-800 w-full break-words ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'opacity-0' : 'opacity-100'}`}>
+                                                                    {note.eng}
+                                                                </p>
+                                                                {hideEnglish && !revealedIndices.includes(idx + 1000) && (
+                                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                        <span className="text-4xl">🙈</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Korean Part */}
+                                                            <div className="bg-slate-50 rounded-lg p-3 min-h-[80px] flex items-center">
+                                                                <p className="text-base text-slate-700 w-full break-words font-medium">
+                                                                    {note.kor}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                                 
                                 <div className="mt-8 text-center text-xs text-slate-400">
                                     모든 내용은 온라인에 자동 저장됩니다. (동기화 ID를 사용하세요)
