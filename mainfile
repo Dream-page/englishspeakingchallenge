@@ -14,7 +14,6 @@ import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where
 // const firebaseConfig = JSON.parse(__firebase_config);
 
 // [수정 후: 본인의 키로 교체 예시]
-/*
 const firebaseConfig = {
   apiKey: "AIzaSyDi1i0_5PxnWxg-7NrDtwPaIOr_WNplSSk",
   authDomain: "self-improvement-aa934.firebaseapp.com",
@@ -24,21 +23,6 @@ const firebaseConfig = {
   appId: "1:141457601477:web:5f81c11d0f1dff8384d1ac",
   measurementId: "G-HS8HFK7YMQ"
 };
-*/
-
-// 🔥 지금은 미리보기 환경이므로 아래 줄을 유지합니다. 
-// 배포할 때는 아래 줄을 지우고 위의 주석을 풀어 본인의 config를 넣으세요.
-const firebaseConfig = typeof __firebase_config !== 'undefined' 
-  ? JSON.parse(__firebase_config) 
-  : { 
-      // 여기에 본인의 실제 키를 넣으시면 됩니다. (로컬 테스트/배포용)
-      apiKey: "YOUR_REAL_API_KEY_HERE",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
-    };
 
 // =================================================================================
 
