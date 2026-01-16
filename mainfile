@@ -1,0 +1,654 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Grape } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+
+// =================================================================================
+// 🚀 [배포 가이드] 아래 설정을 본인의 Firebase 키로 교체하세요!
+// =================================================================================
+// 1. Firebase 콘솔(console.firebase.google.com) -> 프로젝트 설정 -> 내 앱 -> SDK 설정 및 구성
+// 2. firebaseConfig 객체 전체를 복사해서 아래 변수에 덮어씌우세요.
+
+// [수정 전: 현재 미리보기용 임시 코드]
+// const firebaseConfig = JSON.parse(__firebase_config);
+
+// [수정 후: 본인의 키로 교체 예시]
+/*
+const firebaseConfig = {
+  apiKey: "AIzaSyDi1i0_5PxnWxg-7NrDtwPaIOr_WNplSSk",
+  authDomain: "self-improvement-aa934.firebaseapp.com",
+  projectId: "self-improvement-aa934",
+  storageBucket: "self-improvement-aa934.firebasestorage.app",
+  messagingSenderId: "141457601477",
+  appId: "1:141457601477:web:5f81c11d0f1dff8384d1ac",
+  measurementId: "G-HS8HFK7YMQ"
+};
+*/
+
+// 🔥 지금은 미리보기 환경이므로 아래 줄을 유지합니다. 
+// 배포할 때는 아래 줄을 지우고 위의 주석을 풀어 본인의 config를 넣으세요.
+const firebaseConfig = typeof __firebase_config !== 'undefined' 
+  ? JSON.parse(__firebase_config) 
+  : { 
+      // 여기에 본인의 실제 키를 넣으시면 됩니다. (로컬 테스트/배포용)
+      apiKey: "YOUR_REAL_API_KEY_HERE",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+// =================================================================================
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// 배포 시에는 'default-app-id' 대신 원하는 앱 이름을 쓰셔도 됩니다.
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-challenge-app';
+
+// --- Preloaded Data (Day 46 ~ 55) ---
+const preloadedData = {
+    46: [
+      { eng: "Having a joint account could be awesome.", kor: "데이트 통장 만드는 거? 좋은 것 같아." },
+      { eng: "Because with that, it's going to be way easier to plan the dates around a budget.", kor: "왜냐? 그게 있으면 가진 돈에 맞게 데이트 계획 짜기가 훨씬 쉬워지잖아." },
+      { eng: "And spliting the bills on the spot can be too business-like, you know?", kor: "그리고 그 자리에서 돈 나눠내는 거 너무 사무적이고 딱딱한 것 같아." },
+      { eng: "You won't have to worry about those awkward discussions about who's paying for what.", kor: "'누가 뭘 내냐'와 같은 어색한 대화를 하는 거에 대해서 더 이상 걱정하지 않아도 될거야." },
+      { eng: "It's also a good way to avoid fights about money cuz you both are on the same page.", kor: "그리고 또 둘이 같은 마음이기 때문에 돈에 대해서 싸울 일도 적어지지." },
+      { eng: "Call me old-fashioned, but I don't really like the idea of having a joint account.", kor: "날 구닥다리라고 생각해도 좋은데 나는 데이트 통장 별로인 것 같아." },
+      { eng: "I mean, what are you going to do if you guys break up?", kor: "그니까.. 너네 헤어지면 어떡할 건데??" },
+      { eng: "It would be really awkward if you ask him for your money back.", kor: "걔한테 내 돈 다시 돌려달라고 부탁하면 얼마나 어색하겠어." },
+      { eng: "And spliting the bills equally seems too calculated? Fine~ we could just take turns paying for dates.", kor: "돈 반반씩 내는게 너무 계산적이라고? 그럼 번갈아가면서 내면 되잖아~" },
+      { eng: "And I think if you don't have enough trust with him, things can get even uglier.", kor: "그리고 특히 믿음이 안 갈 때 하면, 상황이 훨씬 더 악화될 수 있을거라 생각해." },
+    ],
+    47: [
+      { eng: "I always like to get things done well ahead of time.", kor: "나는 항상 마감 시간 한참 전에 일을 마무리 하는 걸 좋아해." },
+      { eng: "It makes me feel more confident and better.", kor: "그렇게 해야 마음이 좀 더 편하고 자신감(확신)에 차거든." },
+      { eng: "And I like to feel like I have everything under control.", kor: "그리고 모든 게 내 뜻대로, 통제 하에 있다는 느낌을 좋아해." },
+      { eng: "Plus, if something unexpected comes up, I won't have to stress about finishing my work on time.", kor: "또 예상치 못한 뭔가가 생겼을 때, 제시간에 마무리 해야 한다는 생각에 전전긍긍하면서 스트레스 받지 않아도 돼." },
+      { eng: "Also, I don't perform well under such high pressure.", kor: "그리고 일단 내가 그런 압박이 있으면 성과가 잘 안 나기도 해." },
+      { eng: "I'm the opposite. I find that I work best under pressure.", kor: "나는 반대야. 나는 압박이 있어야 일을 잘 하더라고." },
+      { eng: "When the deadline is looming, I suddenly become super focused and efficient.", kor: "데드라인이 다가올 때 갑자기 미친듯이 집중이 되고 효율이 올라가더라니까." },
+      { eng: "And when I finally nail it right before the deadline, I feel this huge sense of catharsis.", kor: "그리고 데드라인 직전에 딱 끝내잖아? 이 카타르시스가 확 느껴진단 말이지." },
+      { eng: "I know it's not the best habit to have.", kor: "이 습관이 물론 좋은 습관은 아니란 걸 알아." },
+      { eng: "But I've been doing it for so long that I'm kind of addicted to this rush.", kor: "근데 너무 오랫동안 해와서 이렇게 빨리 해내는 거에 약간 중독이 된 듯.." },
+    ],
+    48: [
+      { eng: "I really want to get married and start a family someday.", kor: "나는 결혼을 해서 가정을 언젠가 꼭 꾸리고 싶어." },
+      { eng: "Like, it's so important to have that one person who's always there for me, no matter what.", kor: "무슨 일이 있든지 내 편이 되어주는 한 명이 있는 게 난 진짜 중요한 것 같아." },
+      { eng: "I guess I learned it from my parents. They just seem incredibly happy together.", kor: "우리 부모님한테서 느낀 것 같기도 해. 두 분이 같이 있을 때 너무 행복해보이거든." },
+      { eng: "And honestly I think the media is always pushing this idea of staying single.", kor: "그리고 솔직히 미디어에서 혼자 살도록 좀 부추기는 것 같아." },
+      { eng: "They only show us the bad parts of marriage but it can be really amazing if you find the right person.", kor: "결혼의 안 좋은 면만 보여주는데.. 제대로 된 사람만 찾으면 진짜 좋지 않을까?" },
+      { eng: "I don't think getting married is important to be happy in life.", kor: "나는 인생의 행복에 있어 결혼은 별로 중요하지 않다고 생각해." },
+      { eng: "I see many successful single people around me who are living fulfilling lives without marriage.", kor: "나는 결혼 안 하고도 충분히 만족스러운 삶을 사는, 성공한 싱글들이 주변에 많단 말이지." },
+      { eng: "Besides, I'm more focused on my career right now.", kor: "그리고 나는 지금 커리어 쌓는 게 더 중요해." },
+      { eng: "And marriage can be a trap that limits my growth.", kor: "결혼은 오히려 내 성장을 막는 트랩이 될 수도 있어." },
+      { eng: "I also feel like the pressure to get married is outdated and doesn't apply to our generation.", kor: "또 결혼을 해야 한다는 압박을 갖는 게 되게 구시대적이라 생각하고 우리 세대랑은 맞지 않는 것 같아." },
+    ],
+    49: [
+      { eng: "I've always thought that guys and girls can't truly be friends.", kor: "나는 남자랑 여자가 진짜로 찐친이 될 수는 없다고 생각하는 사람이야." },
+      { eng: "They might say they're just friends, but it's highly likely that one of them is a friend in disguise.", kor: "뭐 자기들 말로는 그냥 친구라고 할 수 있지 근데 높은 확률로 한 명은 위장일 거야." },
+      { eng: "Otherwise, why would so many couples get upset when their lover has a friend of the opposite sex?", kor: "안 그러면 왜 그렇게 많은 커플들이 상대가 친한 남사친/여사친 있으면 그렇게 화를 내겠어!" },
+      { eng: "I mean, I've seen so many people start out as friends but eventually become a couple.", kor: "나는 처음에는 친구로 시작했다가 결국 커플이 된 사례를 너무 많이 봤거든." },
+      { eng: "And let's face it, there are certain things you can't share with friends of the opposite gender.", kor: "그리고 솔직히 다른 성별 친구랑은 말 못하는 것들이 분명히 존재를 하잖아." },
+      { eng: "Friendship doesn't depend on gender. They can be friends just fine.", kor: "우정은 성별이랑 상관 없어 남녀 사이 친구 당연히 될 수 있지." },
+      { eng: "As long as both are mature enough to respect each other's boundaries.", kor: "둘 다 서로의 영역을 존중할 줄 아는 성숙한 사람이라면 말이야." },
+      { eng: "I mean, the heck, I have many guy friends myself.", kor: "아니 뭐 나부터도 일단 남사친 많은데!" },
+      { eng: "They are my good 'human network'.", kor: "다 나한테 좋은 인적 네트워크가 되잖아!" },
+      { eng: "And not everything is shared with all of your friends, if you think of it. There are different types of friendships.", kor: "그리고 솔직히 생각해보면 동성친구랑도 모든걸 다 공유하지 않아. 그냥 우정도 다 다르게 생긴거지." },
+    ],
+    50: [
+        { eng: "I love online shopping because it's so easy and convenient!", kor: "나는 온라인 쇼핑이 좋아 너무 쉽고 편하잖아~" },
+        { eng: "I don't have to leave my house, walk around and see all the products just to find the thing that I like.", kor: "집을 나갈 필요도 없고 돌아다니면서 내가 좋아하는 거 찾기 위해 모든 상품을 볼 필요도 없고 말이야." },
+        { eng: "Shopping online can save you so much time.", kor: "온라인으로 쇼핑하면 시간을 많이 절약할 수 있어." },
+        { eng: "Oh, it saves your money too because it often has great deals that you can't find in stores.", kor: "가끔 오프라인 스토어에는 없는 좋은 할인들도 있기 때문에 돈도 절약이 되지." },
+        { eng: "I also love the fact that I can read many reviews from other customers before I buy.", kor: "구매하기 전에 다른 사람들이 남긴 리뷰를 많이 읽어볼 수 있다는 것도 너무 좋아." },
+        { eng: "I prefer to do my shopping in-person.", kor: "나는 직접 쇼핑을 하는 걸 더 선호해." },
+        { eng: "I want to check the products myself, as they often look different online.", kor: "상품을 내가 직접 확인하고 싶어. 온라인에선 가끔 실제 상품이랑 다르게 보일 때 있잖아." },
+        { eng: "I don't know how many times I got disappointed by the poor quality of the products from online shopping.", kor: "온라인 쇼핑으로 받은 물건들 질이 너무 떨어져서 실망한 적이 한 두번이 아니야." },
+        { eng: "Also, I can shop with my friends and family and spend quality time with them.", kor: "그리고 친구들이나 가족들이랑 같이 쇼핑할 수 있어서 의미있는 좋은 시간을 보낼 수도 있지." },
+        { eng: "And the best part is I can get it on the spot without waiting for several days.", kor: "가장 좋은 점은 며칠 기다릴 필요 없이 그 자리에서 바로 가져올 수 있다는 거야!" },
+    ],
+    51: [
+      { eng: "I prefer wednesdays off cuz I feel like the week just flies by so quickly.", kor: "나는 수공강이 더 좋아 왜냐면 한 주가 엄청 빨리 지나가는 기분이거든." },
+      { eng: "It's also like we have two weekends because we get to relax in the middle of the week.", kor: "또 일주일 중간에 쉬게 되니까 약간 주말이 두 번 있는 느낌이야" },
+      { eng: "If I work hard for just two days, I can take a break and this goes on throughout the semester.", kor: "이틀 동안 열심히 일하면 한 번 쉴 수 있고 이게 한 학기 동안 반복되니까 ㅎㅎ" },
+      { eng: "Also, it's less crowded on Wednesdays than on Fridays so I can relax better.", kor: "그리고 수요일이 금요일보다 사람이 덜 붐비니까 더 여유롭게 쉴 수 있어." },
+      { eng: "What's more, during exam season, it's nice to be able to take a bit of a breather.", kor: "또 시험 기간에 약간의 숨통을 돌릴 수 있다는 게 얼마나 좋은지 몰라." },
+      { eng: "Friday is the best day to unwind and let go of any stress from the week.", kor: "금요일이 한 주 동안 받은 스트레스를 풀고 쉬기에 가장 좋은 날이야." },
+      { eng: "First, the weekends feel longer so I can easily go on trips.", kor: "우선 주말이 더 길게 느껴지니까 여행을 쉽게 갈 수 있지." },
+      { eng: "Working for four days can be tough. But having three days off in a row is just so worth it.", kor: "4일동안 일하는 게 힘들 순 있지만, 3일 연속으로 쉬니까 가치가 있지." },
+      { eng: "I start to feel happy from Thursday mornings knowing that I just need to get through one more day.", kor: "이제 하루만 더 지나면 된다는 생각 때문에 목요일 아침부터 행복하기 시작해." },
+      { eng: "And it's a perfect day to hang out since many of my friends also have Fridays off.", kor: "그리고 내 친구들도 거의 다 금공강이라 같이 놀기에도 가장 좋은 날이야." },
+    ],
+    52: [
+        { eng: "I think we don't need to study English as hard as before.", kor: "나는 예전처럼 열심히 영어 공부 할 필요 없다고 생각해." },
+        { eng: "English translation software is now very advanced and sophisticated.", kor: "지금 영어 번역하는 소프트웨어들 진짜 잘 발달했고 정교하기까지 하잖아." },
+        { eng: "AI can now translate and interpret complex sentences with ease.", kor: "인공지능이 이제는 복잡한 문장들도 너무 쉽게 번역하고 해석하니까." },
+        { eng: "It can even translate live conversations, so people can now communicate in their native language.", kor: "실시간 대화까지 번역할 수 있으니까 사람들이 이젠 자기 모국어로 소통을 할 수가 있어." },
+        { eng: "So instead of spending time memorizing grammar rules and vocabulary, we can focus on learning more important skills like coding or engineering.", kor: "그러니까 괜히 문법 규칙이나 단어 외우는 데에 시간을 쓰는 대신에, 코딩이나 엔지니어링같은 좀 더 중요한 기술들을 배우는 데 집중할 수 있는 거지." },
+        { eng: "Despite the advancements in AI, I think learning English is still important.", kor: "인공지능이 발달하긴 했지만 여전히 영어 배우는 건 중요하다고 생각해." },
+        { eng: "Well, it's still the most widely spoken language in the world and it's needed in many fields.", kor: "우선 아직도 전 세계적으로 가장 많이 사용되는 언어이기도 하고 많은 분야에서 필요하기도 하잖아?" },
+        { eng: "Plus, AI technology is not perfect yet and it still makes critical mistakes in translation.", kor: "그리고 인공지능기술이 아직 완벽한 건 아니고 번역할 때 아직도 치명적인 실수를 한단 말이지." },
+        { eng: "But most importantly, I think relying too much on technology can be really risky.", kor: "하지만 가장 중요한 건 나는 기술에 너무 많이 의존하는 게 정말 위험할 것 같다 생각해." },
+        { eng: "We gotta keep pushing ourselves to get better, otherwise we'll be replaced by the machine.", kor: "우리 스스로 더 발전하기 위해 계속 노력해야지 안 그러면 기계에 대체되게 생겼어!" },
+    ],
+    53: [
+        { eng: "I always prefer studying at the library.", kor: "나는 항상 도서관에서 공부하는 걸 선호해." },
+        { eng: "It's super quiet and everyone is focused.", kor: "완전 조용하고 사람들 다 집중하고 있잖아." },
+        { eng: "When I see other people working hard like that, it makes me feel more motivated to study hard.", kor: "다른 사람들이 그렇게 열심히 하는 걸 보면 나도 더 공부 열심히 하도록 동기부여 받아" },
+        { eng: "Plus, I don't have to worry about how I look or dress.", kor: "그리고 내가 어떻게 보이든 뭘 입든 이런거 신경 안 써도 되잖아." },
+        { eng: "It's also a great way to get some quality studying without spending money on anything.", kor: "또 도서관 가는 게 그 어떤 것에도 돈 안 쓰고 질 높은 공부를 할 수 있는 좋은 방법인 것 같아." },
+        { eng: "For me, cafe is a better place to study.", kor: "나 같은 경우는 카페가 공부하기에 더 나은 것 같아." },
+        { eng: "The background noise of people chatting and the sound of coffee machines help me more focused.", kor: "사람들 말하는 소리나 커피 머신 소리 같은 잡음들이 날 더 잘 집중할 수 있게 도와줘" },
+        { eng: "Also, I don't have to feel self-conscious about typing on my laptop.", kor: "그리고 내가 노트북으로 타자칠 때 다른 사람들 눈치 안 봐도 되잖아." },
+        { eng: "And coffee keeps me going when I start to feel drained.", kor: "내가 좀 지치고 힘 빠질 때 커피 마시면 계속 할 수 있지." },
+        { eng: "Sometimes I study with my friends and that helps me do better on exams.", kor: "가끔은 내 친구들이랑 공부 같이하는데 그게 시험을 더 잘 보도록 해주는 것 같아." },
+    ],
+    54: [
+      { eng: "We shouldn't have trusted him in the first place.", kor: "애초에 걔를 믿질 말았어야 했어.." },
+      { eng: "Why did you agree to this in the first place if you didn't want to go?", kor: "아니 안 가고 싶었던 거면 애초에 왜 가겠다고 동의를 한거야?" },
+      { eng: "From the first time we met, I knew we'd be friends.", kor: "우리 처음 만났을 때부터 난 우리가 친해질 줄 알았다구!" },
+      { eng: "I loved this food from the first time I tried it.", kor: "처음 먹어봤을 때부터 이 음식 너무 좋았어!" },
+      { eng: "At first, I thought it was a joke, but then I realized he was actually sick.", kor: "처음에는 장난치는 건 줄 알았는데 알고보니 진짜 아픈 거였더라." },
+      { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }
+    ],
+    55: Array.from({ length: 10 }, () => ({ eng: "", kor: "" })),
+};
+
+// Safe initialization of empty sentences to avoid shared reference bugs
+const getEmptySentences = () => Array.from({ length: 10 }, () => ({ eng: "", kor: "" }));
+
+const StudyApp = () => {
+  // --- Auth & User State ---
+  const [user, setUser] = useState(null);
+  const [syncId, setSyncId] = useState("");
+  const [showSyncModal, setShowSyncModal] = useState(false);
+
+  // --- App Data States ---
+  const [currentDay, setCurrentDay] = useState(46);
+  const [isEditingDay, setIsEditingDay] = useState(false);
+  const [tempDay, setTempDay] = useState(46);
+  
+  const [sentences, setSentences] = useState(getEmptySentences());
+  const [notes, setNotes] = useState([]);
+  const [completedDates, setCompletedDates] = useState([]);
+  
+  // Timer
+  const [timeLeft, setTimeLeft] = useState(3600);
+  const [isActive, setIsActive] = useState(false);
+  const [targetTime] = useState(3600);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  // UI States
+  const [hideEnglish, setHideEnglish] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState([]);
+  const [newNoteEng, setNewNoteEng] = useState("");
+  const [newNoteKor, setNewNoteKor] = useState("");
+
+  // Repetition Tracker (Grape/Bubble) - Per Day
+  const [repetitionCount, setRepetitionCount] = useState(0);
+
+  // --- Auth Initialization ---
+  useEffect(() => {
+    // 🔥 배포 시 중요! 🔥
+    // 이 부분은 건드리지 않으셔도 됩니다. 위에서 설정한 firebaseConfig를 자동으로 사용합니다.
+    const initAuth = async () => {
+      // preview 환경에서는 customToken 사용, 배포 환경에서는 익명 로그인 사용
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    };
+    initAuth();
+    
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        setUser(u);
+        setSyncId(u.uid); // Default sync ID is user ID
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // --- Firestore Sync Logic ---
+  // 1. Sentences & Repetitions (Per Day)
+  useEffect(() => {
+    if (!user) return;
+    
+    // Fixed Path: 'users/{userId}/study_data/day_{currentDay}' to comply with even segments rule
+    const targetUserId = syncId || user.uid;
+    const dayDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', `day_${currentDay}`);
+
+    const unsubscribe = onSnapshot(dayDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSentences(data.sentences || getEmptySentences());
+        setRepetitionCount(data.repetitionCount || 0);
+      } else {
+        // If no data exists in DB for this day, check preloaded
+        if (preloadedData[currentDay]) {
+           const initialData = preloadedData[currentDay];
+           setSentences(initialData);
+           // Save preloaded to DB so it persists
+           setDoc(dayDocRef, { sentences: initialData, repetitionCount: 0 }, { merge: true });
+        } else {
+           setSentences(getEmptySentences());
+           setRepetitionCount(0);
+        }
+      }
+    }, (error) => {
+        console.error("Error syncing day data:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user, currentDay, syncId]);
+
+  // 2. Global Data (Notes, Completed Dates, Timer)
+  useEffect(() => {
+    if (!user) return;
+    const targetUserId = syncId || user.uid;
+    // Fixed Path: 'users/{userId}/study_data/global_data'
+    const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+
+    const unsubscribe = onSnapshot(globalDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setNotes(data.notes || []);
+            setCompletedDates(data.completedDates || []);
+            if (data.timeLeft !== undefined) setTimeLeft(data.timeLeft);
+        }
+    }, (error) => {
+        console.error("Error syncing global data:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user, syncId]);
+
+
+  // --- Saving Logic (Debounced/Triggered) ---
+  const saveDayData = async (newSentences, newRepCount) => {
+      if (!user) return;
+      const targetUserId = syncId || user.uid;
+      const dayDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', `day_${currentDay}`);
+      await setDoc(dayDocRef, { sentences: newSentences, repetitionCount: newRepCount }, { merge: true });
+  };
+
+  const saveGlobalData = async (newNotes, newDates, newTime) => {
+      if (!user) return;
+      const targetUserId = syncId || user.uid;
+      const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+      await setDoc(globalDocRef, { 
+          notes: newNotes !== undefined ? newNotes : notes, 
+          completedDates: newDates !== undefined ? newDates : completedDates,
+          timeLeft: newTime !== undefined ? newTime : timeLeft
+      }, { merge: true });
+  };
+
+  // --- Timer Logic ---
+  useEffect(() => {
+    let interval = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          const newTime = prev - 1;
+          // Save timer every 10 seconds or on finish to avoid write spam
+          if (newTime % 10 === 0) saveGlobalData(undefined, undefined, newTime);
+          
+          if (newTime <= 0) {
+            setIsActive(false);
+            handleGoalAchieved();
+            return 0;
+          }
+          return newTime;
+        });
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft]); 
+
+  // --- Handlers ---
+
+  const handleGoalAchieved = () => {
+    const today = new Date().toISOString().split('T')[0];
+    if (!completedDates.includes(today)) {
+        const newDates = [...completedDates, today];
+        setCompletedDates(newDates);
+        saveGlobalData(undefined, newDates, 0);
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 5000);
+    }
+  };
+
+  const updateSentence = (index, field, value) => {
+    const newSentences = [...sentences];
+    newSentences[index] = { ...newSentences[index], [field]: value };
+    setSentences(newSentences);
+    saveDayData(newSentences, repetitionCount);
+  };
+
+  const toggleRepetition = (index) => {
+      let newCount = index + 1;
+      if (repetitionCount === newCount) {
+          newCount = index; 
+      }
+      setRepetitionCount(newCount);
+      saveDayData(sentences, newCount);
+  };
+
+  const addNote = () => {
+    if (newNoteEng.trim()) {
+      const newNoteList = [{ 
+          id: Date.now(), 
+          eng: newNoteEng, 
+          kor: newNoteKor,
+          date: new Date().toLocaleDateString() 
+      }, ...notes];
+      setNotes(newNoteList);
+      saveGlobalData(newNoteList, undefined, undefined);
+      setNewNoteEng("");
+      setNewNoteKor("");
+    }
+  };
+
+  const deleteNote = (id) => {
+    const newNoteList = notes.filter(n => n.id !== id);
+    setNotes(newNoteList);
+    saveGlobalData(newNoteList, undefined, undefined);
+  };
+
+  const changeDay = (direction) => {
+      const newDay = direction === 'next' ? currentDay + 1 : currentDay - 1;
+      if (newDay > 0) setCurrentDay(newDay);
+  };
+
+  const handleDaySubmit = () => {
+      let d = parseInt(tempDay);
+      if (isNaN(d) || d < 1) d = 1;
+      setCurrentDay(d);
+      setIsEditingDay(false);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const toggleReveal = (index) => {
+    if (!hideEnglish) return;
+    setRevealedIndices(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]);
+  };
+
+  // --- Render ---
+
+  return (
+    <div className="min-h-screen bg-[#F3F4F6] text-slate-800 font-sans p-4 md:p-8 selection:bg-[#B692F6] selection:text-white">
+      
+      {/* Sync Modal */}
+      {showSyncModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm p-4">
+              <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-md w-full animate-bounce-up">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-[#7C3AED]">
+                      <User size={24}/> 동기화 설정 (Sync)
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                      여러 기기에서 기록을 공유하려면, 아래 <strong>내 ID</strong>를 복사해서 다른 기기에 입력하세요.
+                  </p>
+                  
+                  <div className="bg-slate-100 p-3 rounded-xl mb-4 flex items-center justify-between">
+                      <code className="text-xs md:text-sm font-mono text-slate-600 break-all">{user?.uid}</code>
+                      <button onClick={() => navigator.clipboard.writeText(user?.uid)} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-500">
+                          <Copy size={16}/>
+                      </button>
+                  </div>
+
+                  <div className="border-t pt-4">
+                      <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">다른 기기의 ID 입력하기</label>
+                      <input 
+                          type="text" 
+                          value={syncId} 
+                          onChange={(e) => setSyncId(e.target.value)}
+                          placeholder="여기에 ID를 붙여넣으세요"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#7C3AED] outline-none"
+                      />
+                      <p className="text-xs text-slate-400 mt-2">* 입력 후 창을 닫으면 데이터가 로드됩니다.</p>
+                  </div>
+
+                  <button onClick={() => setShowSyncModal(false)} className="w-full mt-6 bg-[#7C3AED] text-white py-3 rounded-xl font-bold hover:bg-[#6D28D9] transition-colors">
+                      완료 (Done)
+                  </button>
+              </div>
+          </div>
+      )}
+
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/20 backdrop-blur-sm animate-fade-in pointer-events-none">
+          <div className="bg-white p-8 rounded-3xl shadow-2xl text-center transform animate-bounce-up border-4 border-[#B692F6]">
+            <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold mb-2 text-[#7C3AED]">Goal Achieved!</h2>
+            <p className="text-gray-600">오늘 1시간 공부 달성! 도장이 찍혔어요 쾅! 🎉</p>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Header */}
+        <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+          <div className="flex items-center gap-4">
+             {/* Day Navigator */}
+             <div className="flex items-center bg-white rounded-2xl shadow-sm p-1 border border-slate-200">
+                <button onClick={() => changeDay('prev')} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-[#7C3AED] transition-colors">
+                    <ChevronLeft size={24} />
+                </button>
+                <div className="px-4 text-center min-w-[120px]">
+                    {isEditingDay ? (
+                        <input
+                            type="number"
+                            value={tempDay}
+                            onChange={(e) => setTempDay(e.target.value)}
+                            onBlur={handleDaySubmit}
+                            onKeyDown={(e) => e.key === 'Enter' && handleDaySubmit()}
+                            className="text-2xl font-extrabold text-[#7C3AED] w-20 text-center bg-transparent border-b-2 border-[#7C3AED] focus:outline-none"
+                            autoFocus
+                        />
+                    ) : (
+                        <h1 
+                            onClick={() => { setTempDay(currentDay); setIsEditingDay(true); }}
+                            className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-100 px-2 rounded-lg transition-colors group"
+                        >
+                            <span className="text-[#7C3AED]">Day {currentDay}</span>
+                            <Edit2 size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"/>
+                        </h1>
+                    )}
+                </div>
+                <button onClick={() => changeDay('next')} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-[#7C3AED] transition-colors">
+                    <ChevronRight size={24} />
+                </button>
+             </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+             {/* Sync Button */}
+             <button onClick={() => setShowSyncModal(true)} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-[#7C3AED] transition-colors" title="Sync across devices">
+                 <User size={20}/>
+             </button>
+             
+             {/* Date Badge */}
+             <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4 text-slate-400"/>
+                <span className="font-semibold text-slate-600">{new Date().toLocaleDateString()}</span>
+             </div>
+          </div>
+        </div>
+
+        {/* LEFT COLUMN */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* Timer */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/60 border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-slate-100">
+              <div 
+                className="h-full bg-gradient-to-r from-[#C4B5FD] to-[#7C3AED] transition-all duration-1000 ease-linear"
+                style={{ width: `${Math.min(((targetTime - timeLeft) / targetTime) * 100, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center mb-8 mt-2">
+              <h3 className="font-bold text-lg text-slate-700 flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-red-400 animate-pulse' : 'bg-slate-300'}`}></div>
+                Focus Timer
+              </h3>
+              <span className="text-xs font-bold text-[#7C3AED] bg-[#F3E8FF] px-3 py-1 rounded-full">Goal: 1hr</span>
+            </div>
+            <div className="text-center mb-8">
+              <div className="text-7xl font-black text-slate-800 tracking-tighter tabular-nums">
+                {formatTime(timeLeft)}
+              </div>
+              <p className="text-slate-400 text-sm mt-2 font-medium">{isActive ? "Keep burning! 🔥" : "Time to focus!"}</p>
+            </div>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => setIsActive(!isActive)} className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-transform active:scale-95 ${isActive ? 'bg-orange-400 hover:bg-orange-500' : 'bg-[#7C3AED] hover:bg-[#6D28D9]'}`}>
+                {isActive ? <Pause fill="currentColor" /> : <Play fill="currentColor" className="ml-1" />}
+              </button>
+              <button onClick={() => { setIsActive(false); setTimeLeft(3600); }} className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors active:scale-95">
+                <RotateCcw size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Stamps */}
+          <div className="bg-[#111827] text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+            <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-[#7C3AED] rounded-full blur-[60px] opacity-40"></div>
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" />Streak Log</h3>
+            <div className="grid grid-cols-7 gap-2">
+              {[...Array(14)].map((_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (13 - i));
+                const dateStr = date.toISOString().split('T')[0];
+                const isCompleted = completedDates.includes(dateStr);
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                return (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${isCompleted ? 'bg-yellow-400 border-yellow-400 text-black' : isToday ? 'bg-transparent border-[#7C3AED] text-white' : 'bg-white/5 border-transparent text-white/30'}`}>
+                      {isCompleted ? "★" : date.getDate()}
+                    </div>
+                    <span className="text-[10px] text-white/40">{date.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Inspo Notes */}
+          <div className="bg-[#FFF1F2] rounded-[2rem] p-6 shadow-md border-2 border-[#FFE4E6]">
+             <h3 className="font-bold text-[#BE123C] mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5" />Inspo Notes</h3>
+             <div className="flex flex-col gap-2 mb-4">
+              <input type="text" value={newNoteEng} onChange={(e) => setNewNoteEng(e.target.value)} placeholder="English Expression..." className="w-full bg-white/50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-[#BE123C]"/>
+              <div className="flex gap-2">
+                <input type="text" value={newNoteKor} onChange={(e) => setNewNoteKor(e.target.value)} placeholder="Meaning..." className="flex-1 bg-white/50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-[#BE123C]"/>
+                <button onClick={addNote} className="bg-[#BE123C] text-white px-4 py-2 rounded-xl hover:bg-[#9F1239] transition-colors"><Plus size={20} /></button>
+              </div>
+            </div>
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
+              {notes.length === 0 ? <p className="text-xs text-[#BE123C]/50 text-center py-4">No notes yet</p> : notes.map(note => (
+                  <div key={note.id} className="group bg-white p-3 rounded-xl shadow-sm border border-[#FECDD3] flex justify-between items-center">
+                    <div className="flex-1 min-w-0"><p className="text-sm font-bold text-slate-800 break-words">{note.eng}</p><p className="text-xs text-[#BE123C]/80 mt-1 break-words">{note.kor}</p></div>
+                    <button onClick={() => deleteNote(note.id)} className="text-[#FDA4AF] hover:text-[#BE123C] opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"><Trash2 size={14} /></button>
+                  </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className="lg:col-span-8">
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/50 min-h-full">
+            
+            {/* Header + Mode Toggle */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><BookOpen className="w-6 h-6 text-[#7C3AED]" />Today's 10 Sentences</h2>
+                <p className="text-sm text-slate-500">{hideEnglish ? "Speaking Mode ON!" : `Day ${currentDay} Challenge`}</p>
+              </div>
+              <button onClick={() => setHideEnglish(!hideEnglish)} className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-[#7C3AED] text-white ring-4 ring-[#C4B5FD]' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
+                {hideEnglish ? <EyeOff size={18}/> : <Eye size={18}/>}
+                {hideEnglish ? "Mode ON" : "Study Mode"}
+              </button>
+            </div>
+
+            {/* Repetition Tracker (Grape/Bubbles) */}
+            <div className="mb-8 p-6 bg-[#F5F3FF] rounded-2xl border border-[#DDD6FE]">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-[#5B21B6] flex items-center gap-2">
+                        <span>🍇</span>
+                        Repetition Check
+                    </h3>
+                    <span className="text-xs font-bold bg-white text-[#7C3AED] px-3 py-1 rounded-full shadow-sm">
+                        {repetitionCount} / 10 Sets
+                    </span>
+                </div>
+                <div className="flex justify-between items-center px-2">
+                    {[...Array(10)].map((_, i) => (
+                        <div 
+                            key={i}
+                            onClick={() => toggleRepetition(i)}
+                            className={`
+                                w-7 h-7 md:w-10 md:h-10 rounded-full border-2 cursor-pointer transition-all duration-300 flex items-center justify-center transform hover:scale-110
+                                ${i < repetitionCount 
+                                    ? 'bg-purple-50 border-[#7C3AED] shadow-md' // Filled: Light bg, solid border
+                                    : 'bg-white border-[#C4B5FD] border-dashed' // Empty: White bg, dashed or lighter border
+                                }
+                            `}
+                        >
+                            {i < repetitionCount ? <span className="text-lg md:text-2xl">🍇</span> : null}
+                        </div>
+                    ))}
+                </div>
+                <p className="text-center text-xs text-[#8B5CF6] mt-4 font-medium">
+                    10문장을 한 세트 다 말할 때마다 포도알을 하나씩 채워주세요! 🍇
+                </p>
+            </div>
+
+            {/* Sentences List */}
+            <div className="space-y-6">
+              {sentences.map((item, idx) => (
+                <div key={idx} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
+                  <div className={`absolute -left-3 -top-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2">
+                    <div className="relative flex flex-col">
+                      <label className={`text-xs font-bold mb-1 block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
+                      <div onClick={() => toggleReveal(idx)} className={`relative flex-1 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer ${hideEnglish && !revealedIndices.includes(idx) ? 'bg-slate-900' : 'bg-slate-50'}`}>
+                         <textarea value={item.eng} onChange={(e) => updateSentence(idx, 'eng', e.target.value)} placeholder={`Day ${currentDay} 문장 (영어)`} className={`w-full h-full bg-transparent border-none rounded-lg text-slate-800 font-bold text-lg p-3 focus:ring-0 outline-none resize-none transition-all duration-300 ${hideEnglish && !revealedIndices.includes(idx) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} rows={3} disabled={hideEnglish && !revealedIndices.includes(idx)} />
+                        {hideEnglish && !revealedIndices.includes(idx) && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="text-4xl animate-bounce">🙈</span></div>)}
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-wider">Meaning</label>
+                      <div className="bg-slate-50 rounded-lg p-3 flex-1">
+                        <textarea value={item.kor} onChange={(e) => updateSentence(idx, 'kor', e.target.value)} placeholder="한국어 해석" className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none font-medium leading-relaxed" rows={3}/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 text-center text-xs text-slate-400">
+               모든 내용은 온라인에 자동 저장됩니다. (동기화 ID를 사용하세요)
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudyApp;
