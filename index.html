@@ -202,9 +202,13 @@
             const [syncId, setSyncId] = useState("");
             const [showSyncModal, setShowSyncModal] = useState(false);
 
-            const [currentDay, setCurrentDay] = useState(46);
+            // [수정됨] 새로고침 해도 마지막 Day 유지하기 (localStorage 사용)
+            const [currentDay, setCurrentDay] = useState(() => {
+                const savedDay = localStorage.getItem('lastVisitedDay');
+                return savedDay ? parseInt(savedDay) : 46;
+            });
             const [isEditingDay, setIsEditingDay] = useState(false);
-            const [tempDay, setTempDay] = useState(46);
+            const [tempDay, setTempDay] = useState(currentDay); // 초기값 수정
             
             const [sentences, setSentences] = useState(getEmptySentences());
             const [notes, setNotes] = useState([]);
@@ -212,6 +216,9 @@
             
             // --- Tab State ---
             const [activeTab, setActiveTab] = useState('challenge'); // 'challenge' | 'notes'
+
+            // --- Calendar State ---
+            const [viewDate, setViewDate] = useState(new Date());
 
             const [timeLeft, setTimeLeft] = useState(3600);
             const [isActive, setIsActive] = useState(false);
@@ -337,7 +344,10 @@
             }, [isActive, timeLeft]); 
 
             const handleGoalAchieved = () => {
-                const today = new Date().toISOString().split('T')[0];
+                // 오늘 날짜를 로컬 기준으로 생성 (YYYY-MM-DD)
+                const d = new Date();
+                const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                
                 if (!completedDates.includes(today)) {
                     const newDates = [...completedDates, today];
                     setCompletedDates(newDates);
@@ -405,13 +415,17 @@
 
             const changeDay = (direction) => {
                 const newDay = direction === 'next' ? currentDay + 1 : currentDay - 1;
-                if (newDay > 0) setCurrentDay(newDay);
+                if (newDay > 0) {
+                    setCurrentDay(newDay);
+                    localStorage.setItem('lastVisitedDay', newDay); // [추가] 변경된 날짜 저장
+                }
             };
 
             const handleDaySubmit = () => {
                 let d = parseInt(tempDay);
                 if (isNaN(d) || d < 1) d = 1;
                 setCurrentDay(d);
+                localStorage.setItem('lastVisitedDay', d); // [추가] 변경된 날짜 저장
                 setIsEditingDay(false);
             };
 
@@ -424,6 +438,16 @@
             const toggleReveal = (index) => {
                 if (!hideEnglish) return;
                 setRevealedIndices(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]);
+            };
+
+            // --- Calendar Logic ---
+            const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+            const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+            const changeMonth = (offset) => {
+                const newDate = new Date(viewDate);
+                newDate.setMonth(newDate.getMonth() + offset);
+                setViewDate(newDate);
             };
 
             return (
@@ -561,25 +585,57 @@
                                 </div>
                             </div>
 
-                            {/* Stamps */}
+                            {/* Monthly Streak Calendar */}
                             <div className="bg-[#111827] text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
-                                <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-[#7C3AED] rounded-full blur-[60px] opacity-40"></div>
+                                {/* [수정됨] pointer-events-none 추가하여 클릭 방해 금지 */}
+                                <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-[#7C3AED] rounded-full blur-[60px] opacity-40 pointer-events-none"></div>
                                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" />Streak Log</h3>
-                                <div className="grid grid-cols-7 gap-2">
-                                    {[...Array(14)].map((_, i) => {
-                                        const date = new Date();
-                                        date.setDate(date.getDate() - (13 - i));
-                                        const dateStr = date.toISOString().split('T')[0];
+                                
+                                {/* Calendar Header */}
+                                <div className="flex justify-between items-center mb-4 px-2 relative z-10">
+                                    <button onClick={() => changeMonth(-1)} className="text-white/50 hover:text-white transition-colors p-1">
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                                        <span className="text-yellow-400 drop-shadow-md">{viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                                    </h3>
+                                    <button onClick={() => changeMonth(1)} className="text-white/50 hover:text-white transition-colors p-1">
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Calendar Grid */}
+                                <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
+                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                                        <div key={d} className="text-[10px] font-bold text-[#7C3AED] uppercase mb-1">{d}</div>
+                                    ))}
+                                    {/* Empty Slots */}
+                                    {Array.from({ length: getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => (
+                                        <div key={`empty-${i}`} />
+                                    ))}
+                                    {/* Days */}
+                                    {Array.from({ length: getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => {
+                                        const day = i + 1;
+                                        const dateStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                         const isCompleted = completedDates.includes(dateStr);
-                                        const isToday = dateStr === new Date().toISOString().split('T')[0];
+                                        const today = new Date();
+                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                        const isToday = dateStr === todayStr;
+                                        
                                         return (
-                                            <div key={i} className="flex flex-col items-center gap-1">
-                                                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${isCompleted ? 'bg-yellow-400 border-yellow-400 text-black' : isToday ? 'bg-transparent border-[#7C3AED] text-white' : 'bg-white/5 border-transparent text-white/30'}`}>
-                                                    {isCompleted ? "★" : date.getDate()}
+                                            <div key={day} className="flex flex-col items-center">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all cursor-default
+                                                    ${isCompleted 
+                                                        ? 'bg-yellow-400 border-yellow-400 text-black shadow-lg shadow-yellow-400/20 scale-110' 
+                                                        : isToday 
+                                                            ? 'bg-white/10 border-[#7C3AED] text-white ring-2 ring-[#7C3AED]/50' 
+                                                            : 'bg-transparent border-transparent text-white/40 hover:bg-white/5'
+                                                    }
+                                                `}>
+                                                    {isCompleted ? "★" : day}
                                                 </div>
-                                                <span className="text-[10px] text-white/40">{date.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
                             </div>
