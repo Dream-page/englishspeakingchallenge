@@ -199,25 +199,25 @@
 
         const StudyApp = () => {
             const [user, setUser] = useState(null);
-            const [syncId, setSyncId] = useState("");
+            
+            // 💡 수정된 부분: localStorage에서 저장된 아이디 불러오기
+            const [syncId, setSyncId] = useState(() => localStorage.getItem('savedSyncId') || "");
+            
             const [showSyncModal, setShowSyncModal] = useState(false);
 
-            // [수정됨] 새로고침 해도 마지막 Day 유지하기 (localStorage 사용)
             const [currentDay, setCurrentDay] = useState(() => {
                 const savedDay = localStorage.getItem('lastVisitedDay');
                 return savedDay ? parseInt(savedDay) : 46;
             });
             const [isEditingDay, setIsEditingDay] = useState(false);
-            const [tempDay, setTempDay] = useState(currentDay); // 초기값 수정
+            const [tempDay, setTempDay] = useState(currentDay); 
             
             const [sentences, setSentences] = useState(getEmptySentences());
             const [notes, setNotes] = useState([]);
             const [completedDates, setCompletedDates] = useState([]);
             
-            // --- Tab State ---
-            const [activeTab, setActiveTab] = useState('challenge'); // 'challenge' | 'notes'
+            const [activeTab, setActiveTab] = useState('challenge'); 
 
-            // --- Calendar State ---
             const [viewDate, setViewDate] = useState(new Date());
 
             const [timeLeft, setTimeLeft] = useState(3600);
@@ -245,13 +245,13 @@
                 const unsubscribe = onAuthStateChanged(auth, (u) => {
                     if (u) {
                         setUser(u);
-                        setSyncId(u.uid); 
+                        // 저장된 syncId가 없으면 내 uid를 기본값으로 사용하지만, 저장하진 않음
+                        if (!syncId) setSyncId(u.uid); 
                     }
                 });
                 return () => unsubscribe();
             }, []);
 
-            // 탭 변경 시 리셋
             useEffect(() => {
                 setRevealedIndices([]);
                 setHideEnglish(false);
@@ -344,7 +344,6 @@
             }, [isActive, timeLeft]); 
 
             const handleGoalAchieved = () => {
-                // 오늘 날짜를 로컬 기준으로 생성 (YYYY-MM-DD)
                 const d = new Date();
                 const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 
@@ -417,7 +416,7 @@
                 const newDay = direction === 'next' ? currentDay + 1 : currentDay - 1;
                 if (newDay > 0) {
                     setCurrentDay(newDay);
-                    localStorage.setItem('lastVisitedDay', newDay); // [추가] 변경된 날짜 저장
+                    localStorage.setItem('lastVisitedDay', newDay); 
                 }
             };
 
@@ -425,8 +424,17 @@
                 let d = parseInt(tempDay);
                 if (isNaN(d) || d < 1) d = 1;
                 setCurrentDay(d);
-                localStorage.setItem('lastVisitedDay', d); // [추가] 변경된 날짜 저장
+                localStorage.setItem('lastVisitedDay', d); 
                 setIsEditingDay(false);
+            };
+
+            // 💡 수정된 부분: 동기화 ID 저장 함수
+            const handleSyncSave = () => {
+                if (syncId) {
+                    localStorage.setItem('savedSyncId', syncId); // 로컬 스토리지에 저장
+                }
+                setShowSyncModal(false);
+                // 강제 새로고침 없이 상태 변화로 데이터 로딩 트리거 (useEffect가 syncId 의존성을 가짐)
             };
 
             const formatTime = (seconds) => {
@@ -440,7 +448,6 @@
                 setRevealedIndices(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]);
             };
 
-            // --- Calendar Logic ---
             const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
             const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
 
@@ -479,10 +486,11 @@
                                         placeholder="여기에 ID를 붙여넣으세요"
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#7C3AED] outline-none"
                                     />
-                                    <p className="text-xs text-slate-400 mt-2">* 입력 후 창을 닫으면 데이터가 로드됩니다.</p>
+                                    <p className="text-xs text-slate-400 mt-2">* 입력 후 '완료'를 누르면 기기에 저장됩니다.</p>
                                 </div>
 
-                                <button onClick={() => setShowSyncModal(false)} className="w-full mt-6 bg-[#7C3AED] text-white py-3 rounded-xl font-bold hover:bg-[#6D28D9] transition-colors">
+                                {/* 💡 수정된 부분: handleSyncSave 연결 */}
+                                <button onClick={handleSyncSave} className="w-full mt-6 bg-[#7C3AED] text-white py-3 rounded-xl font-bold hover:bg-[#6D28D9] transition-colors">
                                     완료 (Done)
                                 </button>
                             </div>
@@ -501,6 +509,7 @@
                     )}
 
                     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* (이하 렌더링 코드는 기존과 동일합니다. 생략 없이 전체 포함) */}
                         
                         {/* Header */}
                         <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
@@ -587,7 +596,6 @@
 
                             {/* Monthly Streak Calendar */}
                             <div className="bg-[#111827] text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
-                                {/* [수정됨] pointer-events-none 추가하여 클릭 방해 금지 */}
                                 <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-[#7C3AED] rounded-full blur-[60px] opacity-40 pointer-events-none"></div>
                                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" />Streak Log</h3>
                                 
