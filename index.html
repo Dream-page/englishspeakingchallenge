@@ -232,6 +232,10 @@
 
             const [repetitionCount, setRepetitionCount] = useState(0);
 
+            // --- Pagination States ---
+            const [notesPage, setNotesPage] = useState(1);
+            const NOTES_PER_PAGE = 10;
+
             useEffect(() => {
                 const initAuth = async () => {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -255,7 +259,7 @@
             useEffect(() => {
                 setRevealedIndices([]);
                 setHideEnglish(false);
-            }, [activeTab, currentDay]);
+            }, [activeTab, currentDay, notesPage]); // 페이지 변경 시에도 리셋
 
             useEffect(() => {
                 if (!user) return;
@@ -403,6 +407,7 @@
                     saveGlobalData(newNoteList, undefined, undefined);
                     setNewNoteEng("");
                     setNewNoteKor("");
+                    setNotesPage(1); // 새 노트 추가 시 1페이지로 이동
                 }
             };
 
@@ -428,13 +433,11 @@
                 setIsEditingDay(false);
             };
 
-            // 💡 수정된 부분: 동기화 ID 저장 함수
             const handleSyncSave = () => {
                 if (syncId) {
-                    localStorage.setItem('savedSyncId', syncId); // 로컬 스토리지에 저장
+                    localStorage.setItem('savedSyncId', syncId); 
                 }
                 setShowSyncModal(false);
-                // 강제 새로고침 없이 상태 변화로 데이터 로딩 트리거 (useEffect가 syncId 의존성을 가짐)
             };
 
             const formatTime = (seconds) => {
@@ -456,6 +459,14 @@
                 newDate.setMonth(newDate.getMonth() + offset);
                 setViewDate(newDate);
             };
+
+            // --- Pagination Logic ---
+            const indexOfLastNote = notesPage * NOTES_PER_PAGE;
+            const indexOfFirstNote = indexOfLastNote - NOTES_PER_PAGE;
+            const currentNotes = notes.slice(indexOfFirstNote, indexOfLastNote);
+            const totalPages = Math.ceil(notes.length / NOTES_PER_PAGE);
+
+            const paginate = (pageNumber) => setNotesPage(pageNumber);
 
             return (
                 <div className="min-h-screen bg-[#F3F4F6] text-slate-800 font-sans p-4 md:p-8 selection:bg-[#B692F6] selection:text-white">
@@ -489,7 +500,6 @@
                                     <p className="text-xs text-slate-400 mt-2">* 입력 후 '완료'를 누르면 기기에 저장됩니다.</p>
                                 </div>
 
-                                {/* 💡 수정된 부분: handleSyncSave 연결 */}
                                 <button onClick={handleSyncSave} className="w-full mt-6 bg-[#7C3AED] text-white py-3 rounded-xl font-bold hover:bg-[#6D28D9] transition-colors">
                                     완료 (Done)
                                 </button>
@@ -509,7 +519,6 @@
                     )}
 
                     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        {/* (이하 렌더링 코드는 기존과 동일합니다. 생략 없이 전체 포함) */}
                         
                         {/* Header */}
                         <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
@@ -816,52 +825,77 @@
                                                     <p className="text-sm mt-1">릴스나 미드에서 본 멋진 표현을 추가해보세요!</p>
                                                 </div>
                                             ) : (
-                                                notes.map((note, idx) => (
-                                                    <div key={note.id} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#BE123C] shadow-lg shadow-pink-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#FECDD3]'}`}>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <span className="text-[10px] font-bold text-[#BE123C] bg-[#FFF1F2] px-2 py-1 rounded-md">
-                                                                {note.date}
-                                                            </span>
-                                                            <div className="flex items-center gap-2">
-                                                                <button 
-                                                                    onClick={() => toggleHighlight(idx, true, note.id)}
-                                                                    className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${note.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                <>
+                                                    {currentNotes.map((note, idx) => (
+                                                        <div key={note.id} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#BE123C] shadow-lg shadow-pink-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#FECDD3]'}`}>
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <span className="text-[10px] font-bold text-[#BE123C] bg-[#FFF1F2] px-2 py-1 rounded-md">
+                                                                    {note.date}
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button 
+                                                                        onClick={() => toggleHighlight(null, true, note.id)}
+                                                                        className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${note.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                                    >
+                                                                        <Highlighter size={14} />
+                                                                    </button>
+                                                                    <button onClick={() => deleteNote(note.id)} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-1">
+                                                                {/* English Part */}
+                                                                <div 
+                                                                    onClick={() => toggleReveal(idx + 1000)} // Offset index to avoid conflict
+                                                                    className={`relative rounded-lg overflow-hidden transition-all duration-300 cursor-pointer min-h-[80px] flex items-center p-3
+                                                                        ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'bg-slate-900' : (note.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
+                                                                    `}
                                                                 >
-                                                                    <Highlighter size={14} />
-                                                                </button>
-                                                                <button onClick={() => deleteNote(note.id)} className="text-slate-300 hover:text-red-400 transition-colors">
-                                                                    <Trash2 size={14} />
-                                                                </button>
+                                                                    <p className={`text-lg font-bold text-slate-800 w-full break-words ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'opacity-0' : 'opacity-100'}`}>
+                                                                        {note.eng}
+                                                                    </p>
+                                                                    {hideEnglish && !revealedIndices.includes(idx + 1000) && (
+                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                            <span className="text-4xl">🙈</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Korean Part */}
+                                                                <div className="bg-slate-50 rounded-lg p-3 min-h-[80px] flex items-center">
+                                                                    <p className="text-base text-slate-700 w-full break-words font-medium">
+                                                                        {note.kor}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                         </div>
-
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-1">
-                                                            {/* English Part */}
-                                                            <div 
-                                                                onClick={() => toggleReveal(idx + 1000)} // Offset index to avoid conflict
-                                                                className={`relative rounded-lg overflow-hidden transition-all duration-300 cursor-pointer min-h-[80px] flex items-center p-3
-                                                                    ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'bg-slate-900' : (note.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
-                                                                `}
+                                                    ))}
+                                                    
+                                                    {/* Pagination Controls */}
+                                                    {notes.length > NOTES_PER_PAGE && (
+                                                        <div className="flex justify-center items-center gap-4 mt-8">
+                                                            <button 
+                                                                onClick={() => paginate(Math.max(1, notesPage - 1))}
+                                                                disabled={notesPage === 1}
+                                                                className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${notesPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-[#BE123C] hover:bg-[#FFF1F2]'}`}
                                                             >
-                                                                <p className={`text-lg font-bold text-slate-800 w-full break-words ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'opacity-0' : 'opacity-100'}`}>
-                                                                    {note.eng}
-                                                                </p>
-                                                                {hideEnglish && !revealedIndices.includes(idx + 1000) && (
-                                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                        <span className="text-4xl">🙈</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Korean Part */}
-                                                            <div className="bg-slate-50 rounded-lg p-3 min-h-[80px] flex items-center">
-                                                                <p className="text-base text-slate-700 w-full break-words font-medium">
-                                                                    {note.kor}
-                                                                </p>
-                                                            </div>
+                                                                <ChevronLeft size={16} /> 이전
+                                                            </button>
+                                                            <span className="text-sm font-bold text-slate-600">
+                                                                {notesPage} / {totalPages}
+                                                            </span>
+                                                            <button 
+                                                                onClick={() => paginate(Math.min(totalPages, notesPage + 1))}
+                                                                disabled={notesPage === totalPages}
+                                                                className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${notesPage === totalPages ? 'text-slate-300 cursor-not-allowed' : 'text-[#BE123C] hover:bg-[#FFF1F2]'}`}
+                                                            >
+                                                                다음 <ChevronRight size={16} />
+                                                            </button>
                                                         </div>
-                                                    </div>
-                                                ))
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </>
