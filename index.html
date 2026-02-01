@@ -22,8 +22,8 @@
     }
     </script>
 
-    <!-- 3. 브라우저에서 JSX를 해석하게 해주는 Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 3. 브라우저에서 JSX를 해석하게 해주는 Babel (버전 고정) -->
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     
     <style>
         /* 폰트나 추가 스타일이 필요하면 여기에 작성 */
@@ -33,28 +33,18 @@
 <body>
     <div id="root"></div>
 
-    <!-- 4. 메인 React 코드 -->
-    <script type="text/babel" data-type="module">
+    <!-- 4. 메인 React 코드 (data-presets에서 env 제거하여 import 구문 유지) -->
+    <script type="text/babel" data-type="module" data-presets="react">
         import React, { useState, useEffect, useCallback, useRef } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Grape, Highlighter, StickyNote, Database } from 'lucide-react';
+        // X 아이콘 추가 (수정 취소용)
+        import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Highlighter, StickyNote, Database, Volume2, X } from 'lucide-react';
         import { initializeApp } from 'firebase/app';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
         // --- Firebase Configuration (배포용 실제 키 적용) ---
         // 🚀 [배포 가이드] 아래 설정을 본인의 Firebase 키로 교체하세요!
-        // 지금은 미리보기 환경이므로 __firebase_config를 사용하지만, 
-        // 실제 파일에서는 아래와 같이 본인의 키를 직접 입력해야 합니다.
-        
-        /* const firebaseConfig = {
-            apiKey: "AIzaSy...", 
-            authDomain: "...",
-            // ... 나머지 설정
-        };
-        */
-
-        // (주의: 캔버스 환경 호환을 위한 코드입니다. 배포시에는 위와 같이 본인 키를 직접 넣으세요.)
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
@@ -74,6 +64,13 @@
 
         // --- Day Topics Mapping (주제 목록) ---
         const dayTopics = {
+            1: "모닝루틴 영어 표현 10가지",
+            2: "운동을 시작한 이유",
+            3: "불금은 좋지만 나가는 건 고민돼!",
+            4: "커피 없인 못 살아! (커피 관련 표현)",
+            5: "취미 소개 원어민처럼 하기",
+            6: "사회초년생과 직장인 필수 영어",
+            45: "주말엔 집에서 쉬기 vs 나가 놀기",
             46: "데이트통장 찬성 vs 반대",
             47: "과제 미리 하기 vs 벼락치기",
             48: "결혼은 필수다 vs 아니다",
@@ -83,11 +80,102 @@
             52: "AI 번역기 있는데 영어공부 필요할까?",
             53: "공부는 조용한 도서관 vs 백색소음 카페",
             54: "뜻이 달라지는 헷갈리는 부사들",
-            55: "숫자와 단위 영어로 말하기"
+            55: "10점 만점에.. 10개 중에.. 영어로?",
+            56: "so that의 정확한 의미와 사용!",
+            57: "막판에 닥쳐서.. 영어로?",
+            58: "뭔가 좀.. 어딘가 좀.. 영어로?"
         };
 
-        // --- Preloaded Data (Day 46 ~ 55) ---
+        // --- Preloaded Data (Day 1 ~ 20, 45 ~ 58) ---
         const preloadedData = {
+            1: [
+                { eng: "Here is what my typical morning looks like.", kor: "제 전형적인 아침은 이렇게 생겼습니다." },
+                { eng: "I'm not really a morning person.", kor: "저는 딱히 아침형 인간은 아니에요." },
+                { eng: "But I try to wake up around 8am.", kor: "그래도 8시 정도에는 일어나려고 노력하죠." },
+                { eng: "I check my phone first thing in the morning.", kor: "아침에 일어나자마자 휴대폰부터 확인해요." },
+                { eng: "And then I brush my teeth right away because I can't stand my bad breath.", kor: "그 다음에는 바로 양치를 하는데요, 입냄새를 견딜 수 없기 때문이죠!" },
+                { eng: "After that, I take a quick, cold shower.", kor: "그 다음에는 빠르게 찬물로 샤워를 해요." },
+                { eng: "I don't like cold showers, but it helps me to wake up quickly.", kor: "찬물 샤워를 좋아하지는 않지만, 빨리 정신이 들게 해주거든요." },
+                { eng: "Normally, I don't eat breakfast.", kor: "보통 저는 아침은 먹지 않는데요." },
+                { eng: "But now that I live alone, I have to take better care of myself.", kor: "이제 혼자 사니까 스스로를 더 잘 돌봐줘야 해서." },
+                { eng: "So I'm trying to eat smaller portions of food.", kor: "적은 양이라도 먹으려고 노력 중입니다." }
+            ],
+            2: [
+                { eng: "I've been working out in the morning lately.", kor: "요즘에 저는 아침에 운동을 하고 있어요." },
+                { eng: "I've never been a morning workout person.", kor: "저는 아침에 운동 하는 사람이 전혀 아니었는데요" },
+                { eng: "But I decided to give it a shot for the first time.", kor: "하지만 처음으로 한 번 시도를 해보기로 결심했답니다." },
+                { eng: "I used to workout because I cared about my image.", kor: "저는 보여지는 이미지 때문에 운동을 하곤 했습니다." },
+                { eng: "You know, instagram and stuff.", kor: "인스타그램 같은 거 때문에 말이죠." },
+                { eng: "But nowadays I work out for myself.", kor: "그러나 요즘은 제 스스로를 위해 운동합니다." },
+                { eng: "And it's true that I gained some weight over the past few months.", kor: "그리고 지난 몇 달 동안 살이 좀 찐 것도 사실이에요" },
+                { eng: "I wasn't eating right and didn't have any motivation to go to the gym.", kor: "제대로 된 음식 챙겨먹지 않았고 헬스장에 갈 마음이 하나도 없었거든요" },
+                { eng: "So my weight was slowly creeping up to where I am now.", kor: "그러니 지금 몸무게 수준으로 천천히 슬금슬금 올라왔나봐요." },
+                { eng: "I want to get back to my normal weight, so.. wish me luck!", kor: "원래 몸무게로 돌아가고 싶네요. 응원해주세요!" }
+            ],
+            3: [
+                { eng: "Okay. It's THE Friday night!", kor: "오늘이 바로 그! 금요일 밤이에요!" },
+                { eng: "I'm beyond happy.", kor: "너무너무 행복해요!" },
+                { eng: "But the funny thing is I don't really do anything on Fridays.", kor: "웃긴 건 원래는 금요일에 별 거 안 하거든요." },
+                { eng: "I'm not a party kind of girl/guy so I just like to stay in on Fridays.", kor: "파티를 즐기는 타입의 사람도 아니여서 그냥 집에 있어요" },
+                { eng: "I usually have a cozy night in the comfort of my own home.", kor: "보통은 그냥 집에서 편안하게 밤을 보내곤 해요." },
+                { eng: "But my friends are all going out tonight and I haven't seen them in so long.", kor: "하지만 오늘 밤엔 친구들이 다 나가 논대요 그리고 그 친구들 안 본지 진짜 오래돼서" },
+                { eng: "So I'm like \"should I have a chill night or should I have a fun night?\"", kor: "'아 집에서 쉴까 나가서 놀까' 이러고 있거든요" },
+                { eng: "But it's Friday.", kor: "하지만 금요일이잖아요." },
+                { eng: "Now that i'm thinking about it, it needs to be a fun night!", kor: "지금 생각을 해보니까 금요일은 나가서 재밌게 놀아야 할 것 같네요!" },
+                { eng: "So I'll probably join them.", kor: "그 친구들 만나러 나가야 겠어요" }
+            ],
+            4: [
+                { eng: "I used to start my day with a cup of coffee.", kor: "저는 하루를 커피 한 잔으로 시작하곤 했어요" },
+                { eng: "I couldn't really function without it.", kor: "커피 없이는 생활이 안 되더라구요" },
+                { eng: "It was kind of hard for me to get through the day.", kor: "(커피 없이 살면) 하루를 지내는 게 좀 힘들었어요" },
+                { eng: "But I heard drinking coffee right after waking up messes with some kind of hormone.", kor: "근데 일어나자마자 커피를 마시는 게 무슨 호르몬을 방해한다고 들었어요." },
+                { eng: "And that's what makes me feel jittery.", kor: "그리고 그게 저를 초조하게 만드는 거죠." },
+                { eng: "But I would just ignore it.", kor: "근데 저는 그 사실을 그냥 무시하곤 했어요.ㅋㅋ" },
+                { eng: "I don't think I can possibly give up caffeine just yet.", kor: "아직은 카페인을 포기할 수 있을 것 같지 않아요." },
+                { eng: "I'm not really ready for that.", kor: "그럴 준비가 안 됐거든요." },
+                { eng: "But now I drink coffee a bit later in the day.", kor: "그래도 지금은 느즈막히 커피를 마십니다." },
+                { eng: "And I'm planning to get a coffee machine so that I don't have to buy coffee every day.", kor: "그리고 매일 커피 안 사도 되게끔 커피 머신을 사려고 해요!" }
+            ],
+            5: [
+                { eng: "When I'm asked what I like to do in my free time, I sometimes don't know what to say.", kor: "누가 저한테 쉴 때 뭐하냐고 물어보면 가끔 무슨 말을 해야할지 모르겠어요." },
+                { eng: "That's because I have so many things I enjoy doing.", kor: "그 이유는 제가 하기 좋아하는 것들이 아주 많기 때문이죠" },
+                { eng: "For one thing, I really like hanging out with my friends.", kor: "우선 친구들이랑 노는 것을 정말 좋아해요" },
+                { eng: "So usually after school, we grab some beers, and sometimes we have a movie night.", kor: "그래서 보통 학교 끝나고 가서 맥주 한 잔 하거나 가끔 밤에 영화도 보고 그래요." },
+                { eng: "I also love playing sports.", kor: "또 운동하는 것도 좋아하는데요" },
+                { eng: "So every Wednesday, I play badminton at a park near my place.", kor: "그래서 매주 수요일마다 집근처 공원에서 배드민턴을 친답니다." },
+                { eng: "Oh, and one of my friends got me into baking recently.", kor: "아 그리고 친구 한 명이 최근에 저를 베이킹에 맛들게 했어요" },
+                { eng: "So we bake together once or twice a month.", kor: "그래서 한 달에 한 두번 정도 같이 베이킹을 해요." },
+                { eng: "But I also like doing something productive in my free time.", kor: "하지만 저는 시간이 나면 뭔가 생산적인 일을 하는 것도 좋아하는데요" },
+                { eng: "That's why lately, I've been studying English with Jennie every night!", kor: "그래서 요즘에는 매일 밤마다 제니랑 영어 공부를 하고 있답니다! ㅎㅎ" }
+            ],
+            6: [
+                { eng: "It's been three months since i started working at SamSung.", kor: "제가 삼성에서 일하기 시작한지 3개월이 됐어요." },
+                { eng: "I work as a marketing assistant.", kor: "저는 마케팅 어시스턴트로 일하고 있구요" },
+                { eng: "This is my first job since graduating from college.", kor: "대학교 졸업 후 첫 직장이에요." },
+                { eng: "I have a typical nine-to-six work scehdule.", kor: "9-6시의 전형적인 직장인 근무 스케줄을 따르구요." },
+                { eng: "And I have to go to the office three times a week.", kor: "사무실에는 일주일에 세 번만 나가면 돼요" },
+                { eng: "I remember that my professor wanted me to attend graduate school.", kor: "아 저희 교수님이 저 대학원 다니길 원하셨던 게 기억나네요" },
+                { eng: "But I was more interested in building my own career and making money.", kor: "저는 근데 저만의 커리어 쌓는 것과 돈을 버는 것에 더 관심이 있었어요." },
+                { eng: "Plus, I wanted to work in a corporate environment and see what it's like.", kor: "그리고 회사 환경 속에서 일해보고 싶었고 그렇게 일하는 게 어떤지 궁금했어요." },
+                { eng: "So having this full time job is exactly what I wanted.", kor: "그래서 정규직으로 일하는 게 제가 딱 원했던 거였답니다." },
+                { eng: "It can be challenging sometimes but so far I enjoy working here at SamSung.", kor: "일이 가끔 힘들긴 하지만 아직까지는 삼성에서 일하는 게 즐거워요!" }
+            ],
+            // Day 7~20 Placeholder (User fills in)
+            7: [], 8: [], 9: [], 10: [],
+            11: [], 12: [], 13: [], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [],
+            
+            45: [
+                { eng: "I just love staying in on weekends.", kor: "나는 주말에 집에 있는 걸 좋아해." },
+                { eng: "It's so much more relaxing and stress-free than going out.", kor: "나가는 것보다 훨씬 더 편하고 스트레스도 안 받거든." },
+                { eng: "At home, I can just wear my comfy pajamas and not worry about dressing up and all that.", kor: "집에서는 내 편한 파자마 입고 꾸미고 자시고 하는 거 걱정 안 해도 되잖아!" },
+                { eng: "Plus, I need to catch up on all the TV shows I've been missing out on.", kor: "또 그동안 놓쳤던 밀린 예능들도 다 봐야 해." },
+                { eng: "And I like to just order in some food and have a chill day in my own space.", kor: "음식 배달 시켜서 나만의 공간에서 그냥 편안하게 보내는 게 좋아." },
+                { eng: "I get where you're coming from, but for me, staying in on weekends just feels like a waste.", kor: "네가 왜 그렇게 말하는지 알겠는데 나같은 경우는 주말에 집에 있는 건 뭔가 낭비같이 느껴져." },
+                { eng: "I'm all about trying new things and making the most of my time.", kor: "나는 새로운 것도 시도해보고 내가 가진 시간 최대한 뽕 뽑는 게 중요하거든." },
+                { eng: "I get energized by being around people, so I like to hang out with them as much as possible.", kor: "나는 사람들과 함께 있으면서 에너지를 얻기 때문에 가능하면 그렇게 만나서 노는 걸 좋아해." },
+                { eng: "And to be honest, if I stay in too long, I start to feel restless.", kor: "그리고 솔직히 집에 너무 오래 있으면 뭔가 가만히 있지를 못하겠더라고." },
+                { eng: "So I need to get out, move around, see new things, and get some fresh air.", kor: "그래서 어차피 나가서 좀 돌아다니고 새로운 것도 좀 보고 바람 좀 쐬어야 해." }
+            ],
             46: [
             { eng: "Having a joint account could be awesome.", kor: "데이트 통장 만드는 거? 좋은 것 같아." },
             { eng: "Because with that, it's going to be way easier to plan the dates around a budget.", kor: "왜냐? 그게 있으면 가진 돈에 맞게 데이트 계획 짜기가 훨씬 쉬워지잖아." },
@@ -192,7 +280,38 @@
             { eng: "At first, I thought it was a joke, but then I realized he was actually sick.", kor: "처음에는 장난치는 건 줄 알았는데 알고보니 진짜 아픈 거였더라." },
             { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }
             ],
-            55: Array.from({ length: 10 }, () => ({ eng: "", kor: "" })),
+            55: [
+                { eng: "I would rate this book 3 out of 5 stars.", kor: "그 책 나는 한.. 별 다섯 개 중에 세 개 줄래." },
+                { eng: "The movie was perfect. I'd give it 10 out of 10.", kor: "그 영화 정말 완벽했어. 10점 만점에 10점 줄거야." },
+                { eng: "She's always late, like 9 out of 10 times.", kor: "걔는 맨날 늦어, 한 10번 중 9번은." },
+                { eng: "One out of every 10 people is left-handed.", kor: "열 명 중 한 명은 왼손잡이야." },
+                { eng: "I got 11 out of 15 questions right on the quiz.", kor: "그 퀴즈에서 문제 15개 중에서 11개 맞혔어." },
+                { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }
+            ],
+            56: [
+                { eng: "He works out regularly so that he stays healthy.", kor: "그 친구 건강하게 살려고 규칙적으로 운동해." },
+                { eng: "Wait, I need to write it down so that I won't forget.", kor: "잠만, 나 이거 안 까먹으려면 어디다 좀 적어야 겠는데?" },
+                { eng: "I bought a bedside reading lamp so that I can read better.", kor: "침대에서 책 읽을 때 더 편하려고 독서등 샀어!" },
+                { eng: "I left early this morning so that I wouldn't be late to work. And I wasn't!", kor: "회사 지각 안 하려고 오늘 아침에는 일찍 나왔다! 그리고 지각도 안 했지롱~" },
+                { eng: "I crammed hard last night so that I can get a good grade on the quiz next period. Wish me luck!", kor: "다음 교시 쪽지 시험 점수 잘 받으려고 어젯밤에 벼락치기 열심히 했어! 행운 좀 빌어줘 ㅎ" },
+                { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }
+            ],
+            57: [
+                { eng: "They canceled the meeting at the last minute!", kor: "회사에서 막판에 회의를 취소했어." },
+                { eng: "I know it's last minute but can we do this another time?", kor: "너무 갑작스러운 거 아는데.. 이거 나중에 할 수 있을까?" },
+                { eng: "It was so last minute that we didn't even have time to prepare.", kor: "너무 막판이라 준비할 시간조차 없었어." },
+                { eng: "I need to do a last-minute review for this exam so do you mind?", kor: "나 지금 이 시험 막판 복습 좀 해야되니까... 저리 좀 가줄래?" },
+                { eng: "They moved up the deadline at the last minute, so she was very upset about that.", kor: "그 쪽에서 막판에 닥쳐서 데드라인을 당기는 바람에 걔 엄청 화났었잖아." },
+                { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }
+            ],
+            58: [
+                { eng: "There is something familiar about this place.", kor: "여기 어딘가 좀 낯이 익은데?" },
+                { eng: "There is something funny about the way he walks.", kor: "그 친구 걸음걸이 뭔가 좀 웃겨." },
+                { eng: "There was something off about the way he talked.", kor: "걔 말투가 뭔가 좀 수상쩍었어." },
+                { eng: "There was something sad about the look on his face.", kor: "오빠 표정이 뭔가 좀 슬퍼보였어." },
+                { eng: "There is something comforting about that old bookstore. It's different from the big chain.", kor: "그 오래된 서점은 뭔가 좀 편안해지는 그런 게 있어. 대형 서점들하고는 달라." },
+                { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }, { eng: "", kor: "" }
+            ],
         };
 
         const getEmptySentences = () => Array.from({ length: 10 }, () => ({ eng: "", kor: "" }));
@@ -203,6 +322,11 @@
             // 💡 수정된 부분: localStorage에서 저장된 아이디 불러오기
             const [syncId, setSyncId] = useState(() => localStorage.getItem('savedSyncId') || "");
             
+            // --- Editing States for Inspo Notes ---
+            const [editingNoteId, setEditingNoteId] = useState(null);
+            const [editEng, setEditEng] = useState("");
+            const [editKor, setEditKor] = useState("");
+
             const [showSyncModal, setShowSyncModal] = useState(false);
 
             const [currentDay, setCurrentDay] = useState(() => {
@@ -258,8 +382,8 @@
 
             useEffect(() => {
                 setRevealedIndices([]);
-                setHideEnglish(false);
-            }, [activeTab, currentDay, notesPage]); // 페이지 변경 시에도 리셋
+                // setHideEnglish(false); // [수정] 스터디 모드 유지 (주석 처리)
+            }, [activeTab, currentDay, notesPage]); 
 
             useEffect(() => {
                 if (!user) return;
@@ -284,6 +408,16 @@
                     }
                 }, (error) => {
                     console.error("Error syncing day data:", error);
+                    // 💡 권한 오류 자동 복구 로직
+                    if (error.code === 'permission-denied') {
+                        if (syncId && user && syncId !== user.uid) {
+                            alert("동기화 ID가 만료되었거나 권한이 없습니다. 자동으로 내 ID로 초기화합니다.");
+                            setSyncId(user.uid);
+                            localStorage.removeItem('savedSyncId');
+                        } else {
+                            console.warn("내 데이터에 접근할 수 없습니다. 배포된 앱이라면 Firestore 보안 규칙을 확인해주세요.");
+                        }
+                    }
                 });
 
                 return () => unsubscribe();
@@ -303,6 +437,12 @@
                     }
                 }, (error) => {
                     console.error("Error syncing global data:", error);
+                    // 💡 권한 오류 자동 복구 로직 (글로벌 데이터)
+                    if (error.code === 'permission-denied' && syncId && user && syncId !== user.uid) {
+                        // 위에서 이미 alert을 띄웠을 수 있으므로 여기선 조용히 처리
+                        setSyncId(user.uid);
+                        localStorage.removeItem('savedSyncId');
+                    }
                 });
 
                 return () => unsubscribe();
@@ -394,6 +534,18 @@
                 saveDayData(sentences, newCount);
             };
 
+            // 🗣️ TTS (Text-to-Speech) Function
+            const speakText = (text) => {
+                if (!text) return;
+                // 현재 재생 중인 오디오가 있다면 중지
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US'; // 미국식 영어
+                utterance.rate = 1.0; // 보통 속도 (0.5 ~ 2.0)
+                window.speechSynthesis.speak(utterance);
+            };
+
             const addNote = () => {
                 if (newNoteEng.trim()) {
                     const newNoteList = [{ 
@@ -415,6 +567,28 @@
                 const newNoteList = notes.filter(n => n.id !== id);
                 setNotes(newNoteList);
                 saveGlobalData(newNoteList, undefined, undefined);
+            };
+
+            // --- Edit Handlers for Inspo Notes ---
+            const startEditing = (note) => {
+                setEditingNoteId(note.id);
+                setEditEng(note.eng);
+                setEditKor(note.kor);
+            };
+
+            const cancelEdit = () => {
+                setEditingNoteId(null);
+                setEditEng("");
+                setEditKor("");
+            };
+
+            const saveEdit = () => {
+                const updatedNotes = notes.map(n => 
+                    n.id === editingNoteId ? { ...n, eng: editEng, kor: editKor } : n
+                );
+                setNotes(updatedNotes);
+                saveGlobalData(updatedNotes, undefined, undefined);
+                setEditingNoteId(null);
             };
 
             const changeDay = (direction) => {
@@ -737,13 +911,22 @@
                                                         <div className="relative flex flex-col">
                                                             <div className="flex justify-between items-end mb-1">
                                                                 <label className={`text-xs font-bold block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
-                                                                <button 
-                                                                    onClick={() => toggleHighlight(idx)}
-                                                                    className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${item.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
-                                                                    title="어려운 문장 하이라이트"
-                                                                >
-                                                                    <Highlighter size={14} />
-                                                                </button>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button 
+                                                                        onClick={() => speakText(item.eng)}
+                                                                        className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#7C3AED] transition-colors"
+                                                                        title="듣기 (Listen)"
+                                                                    >
+                                                                        <Volume2 size={16} />
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => toggleHighlight(idx)}
+                                                                        className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${item.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                                        title="어려운 문장 하이라이트"
+                                                                    >
+                                                                        <Highlighter size={14} />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                             
                                                             <div 
@@ -833,42 +1016,93 @@
                                                                     {note.date}
                                                                 </span>
                                                                 <div className="flex items-center gap-2">
-                                                                    <button 
-                                                                        onClick={() => toggleHighlight(null, true, note.id)}
-                                                                        className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${note.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
-                                                                    >
-                                                                        <Highlighter size={14} />
-                                                                    </button>
-                                                                    <button onClick={() => deleteNote(note.id)} className="text-slate-300 hover:text-red-400 transition-colors">
-                                                                        <Trash2 size={14} />
-                                                                    </button>
+                                                                    {/* ✏️ 수정된 부분: Edit Mode UI */}
+                                                                    {editingNoteId === note.id ? (
+                                                                        <div className="flex gap-2">
+                                                                            <button onClick={saveEdit} className="text-green-500 hover:text-green-600 transition-colors" title="저장">
+                                                                                <Check size={18}/>
+                                                                            </button>
+                                                                            <button onClick={cancelEdit} className="text-red-400 hover:text-red-500 transition-colors" title="취소">
+                                                                                <X size={18}/>
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center gap-2">
+                                                                            <button 
+                                                                                onClick={() => speakText(note.eng)}
+                                                                                className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#BE123C] transition-colors"
+                                                                                title="듣기"
+                                                                            >
+                                                                                <Volume2 size={16} />
+                                                                            </button>
+                                                                            <button 
+                                                                                onClick={() => startEditing(note)}
+                                                                                className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#BE123C] transition-colors"
+                                                                                title="수정"
+                                                                            >
+                                                                                <Edit2 size={16} />
+                                                                            </button>
+                                                                            <button 
+                                                                                onClick={() => toggleHighlight(null, true, note.id)}
+                                                                                className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${note.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                                                title="강조"
+                                                                            >
+                                                                                <Highlighter size={16} />
+                                                                            </button>
+                                                                            <button onClick={() => deleteNote(note.id)} className="text-slate-300 hover:text-red-400 transition-colors" title="삭제">
+                                                                                <Trash2 size={16} />
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-1">
                                                                 {/* English Part */}
-                                                                <div 
-                                                                    onClick={() => toggleReveal(idx + 1000)} // Offset index to avoid conflict
-                                                                    className={`relative rounded-lg overflow-hidden transition-all duration-300 cursor-pointer min-h-[80px] flex items-center p-3
-                                                                        ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'bg-slate-900' : (note.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
-                                                                    `}
-                                                                >
-                                                                    <p className={`text-lg font-bold text-slate-800 w-full break-words ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'opacity-0' : 'opacity-100'}`}>
-                                                                        {note.eng}
-                                                                    </p>
-                                                                    {hideEnglish && !revealedIndices.includes(idx + 1000) && (
-                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                            <span className="text-4xl">🙈</span>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                                {editingNoteId === note.id ? (
+                                                                     <div className="bg-slate-50 border border-purple-200 rounded-lg p-3 min-h-[80px] flex items-center">
+                                                                        <textarea 
+                                                                            value={editEng} 
+                                                                            onChange={(e) => setEditEng(e.target.value)} 
+                                                                            className="w-full h-full bg-transparent border-none text-slate-800 font-bold text-lg focus:ring-0 outline-none resize-none"
+                                                                            rows={2}
+                                                                        />
+                                                                     </div>
+                                                                ) : (
+                                                                    <div 
+                                                                        onClick={() => toggleReveal(idx + 1000)} // Offset index to avoid conflict
+                                                                        className={`relative rounded-lg overflow-hidden transition-all duration-300 cursor-pointer min-h-[80px] flex items-center p-3
+                                                                            ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'bg-slate-900' : (note.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
+                                                                        `}
+                                                                    >
+                                                                        <p className={`text-lg font-bold text-slate-800 w-full break-words ${hideEnglish && !revealedIndices.includes(idx + 1000) ? 'opacity-0' : 'opacity-100'}`}>
+                                                                            {note.eng}
+                                                                        </p>
+                                                                        {hideEnglish && !revealedIndices.includes(idx + 1000) && (
+                                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                                <span className="text-4xl">🙈</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
 
                                                                 {/* Korean Part */}
-                                                                <div className="bg-slate-50 rounded-lg p-3 min-h-[80px] flex items-center">
-                                                                    <p className="text-base text-slate-700 w-full break-words font-medium">
-                                                                        {note.kor}
-                                                                    </p>
-                                                                </div>
+                                                                {editingNoteId === note.id ? (
+                                                                    <div className="bg-slate-50 border border-purple-200 rounded-lg p-3 min-h-[80px] flex items-center">
+                                                                        <textarea 
+                                                                            value={editKor} 
+                                                                            onChange={(e) => setEditKor(e.target.value)} 
+                                                                            className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none"
+                                                                            rows={2}
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="bg-slate-50 rounded-lg p-3 min-h-[80px] flex items-center">
+                                                                        <p className="text-base text-slate-700 w-full break-words font-medium">
+                                                                            {note.kor}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ))}
