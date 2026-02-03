@@ -43,11 +43,10 @@
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
         // --- Firebase Configuration ---
-        // 🚀 [배포 가이드] 아래 설정을 본인의 Firebase 키로 교체하세요!
-        // (현재는 캔버스 환경 호환을 위해 조건부로 작성되어 있습니다)
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
+                // 🚀 배포 시 이곳에 본인의 Firebase 설정을 넣으세요.
                 apiKey: "AIzaSyDi1i0_5PxnWxg-7NrDtwPaIOr_WNplSSk",
                 authDomain: "self-improvement-aa934.firebaseapp.com",
                 projectId: "self-improvement-aa934",
@@ -175,52 +174,52 @@
                 { eng: "So I need to get out, move around, see new things, and get some fresh air.", kor: "그래서 어차피 나가서 좀 돌아다니고 새로운 것도 좀 보고 바람 좀 쐬어야 해." }
             ],
             46: [
-                { eng: "Having a joint account could be awesome.", kor: "데이트 통장 만드는 거? 좋은 것 같아." },
-                { eng: "Because with that, it's going to be way easier to plan the dates around a budget.", kor: "왜냐? 그게 있으면 가진 돈에 맞게 데이트 계획 짜기가 훨씬 쉬워지잖아." },
-                { eng: "And spliting the bills on the spot can be too business-like, you know?", kor: "그리고 그 자리에서 돈 나눠내는 거 너무 사무적이고 딱딱한 것 같아." },
-                { eng: "You won't have to worry about those awkward discussions about who's paying for what.", kor: "'누가 뭘 내냐'와 같은 어색한 대화를 하는 거에 대해서 더 이상 걱정하지 않아도 될거야." },
-                { eng: "It's also a good way to avoid fights about money cuz you both are on the same page.", kor: "그리고 또 둘이 같은 마음이기 때문에 돈에 대해서 싸울 일도 적어지지." },
-                { eng: "Call me old-fashioned, but I don't really like the idea of having a joint account.", kor: "날 구닥다리라고 생각해도 좋은데 나는 데이트 통장 별로인 것 같아." },
-                { eng: "I mean, what are you going to do if you guys break up?", kor: "그니까.. 너네 헤어지면 어떡할 건데??" },
-                { eng: "It would be really awkward if you ask him for your money back.", kor: "걔한테 내 돈 다시 돌려달라고 부탁하면 얼마나 어색하겠어." },
-                { eng: "And spliting the bills equally seems too calculated? Fine~ we could just take turns paying for dates.", kor: "돈 반반씩 내는게 너무 계산적이라고? 그럼 번갈아가면서 내면 되잖아~" },
-                { eng: "And I think if you don't have enough trust with him, things can get even uglier.", kor: "그리고 특히 믿음이 안 갈 때 하면, 상황이 훨씬 더 악화될 수 있을거라 생각해." },
+            { eng: "Having a joint account could be awesome.", kor: "데이트 통장 만드는 거? 좋은 것 같아." },
+            { eng: "Because with that, it's going to be way easier to plan the dates around a budget.", kor: "왜냐? 그게 있으면 가진 돈에 맞게 데이트 계획 짜기가 훨씬 쉬워지잖아." },
+            { eng: "And spliting the bills on the spot can be too business-like, you know?", kor: "그리고 그 자리에서 돈 나눠내는 거 너무 사무적이고 딱딱한 것 같아." },
+            { eng: "You won't have to worry about those awkward discussions about who's paying for what.", kor: "'누가 뭘 내냐'와 같은 어색한 대화를 하는 거에 대해서 더 이상 걱정하지 않아도 될거야." },
+            { eng: "It's also a good way to avoid fights about money cuz you both are on the same page.", kor: "그리고 또 둘이 같은 마음이기 때문에 돈에 대해서 싸울 일도 적어지지." },
+            { eng: "Call me old-fashioned, but I don't really like the idea of having a joint account.", kor: "날 구닥다리라고 생각해도 좋은데 나는 데이트 통장 별로인 것 같아." },
+            { eng: "I mean, what are you going to do if you guys break up?", kor: "그니까.. 너네 헤어지면 어떡할 건데??" },
+            { eng: "It would be really awkward if you ask him for your money back.", kor: "걔한테 내 돈 다시 돌려달라고 부탁하면 얼마나 어색하겠어." },
+            { eng: "And spliting the bills equally seems too calculated? Fine~ we could just take turns paying for dates.", kor: "돈 반반씩 내는게 너무 계산적이라고? 그럼 번갈아가면서 내면 되잖아~" },
+            { eng: "And I think if you don't have enough trust with him, things can get even uglier.", kor: "그리고 특히 믿음이 안 갈 때 하면, 상황이 훨씬 더 악화될 수 있을거라 생각해." },
             ],
             47: [
-                { eng: "I always like to get things done well ahead of time.", kor: "나는 항상 마감 시간 한참 전에 일을 마무리 하는 걸 좋아해." },
-                { eng: "It makes me feel more confident and better.", kor: "그렇게 해야 마음이 좀 더 편하고 자신감(확신)에 차거든." },
-                { eng: "And I like to feel like I have everything under control.", kor: "그리고 모든 게 내 뜻대로, 통제 하에 있다는 느낌을 좋아해." },
-                { eng: "Plus, if something unexpected comes up, I won't have to stress about finishing my work on time.", kor: "또 예상치 못한 뭔가가 생겼을 때, 제시간에 마무리 해야 한다는 생각에 전전긍긍하면서 스트레스 받지 않아도 돼." },
-                { eng: "Also, I don't perform well under such high pressure.", kor: "그리고 일단 내가 그런 압박이 있으면 성과가 잘 안 나기도 해." },
-                { eng: "I'm the opposite. I find that I work best under pressure.", kor: "나는 반대야. 나는 압박이 있어야 일을 잘 하더라고." },
-                { eng: "When the deadline is looming, I suddenly become super focused and efficient.", kor: "데드라인이 다가올 때 갑자기 미친듯이 집중이 되고 효율이 올라가더라니까." },
-                { eng: "And when I finally nail it right before the deadline, I feel this huge sense of catharsis.", kor: "그리고 데드라인 직전에 딱 끝내잖아? 이 카타르시스가 확 느껴진단 말이지." },
-                { eng: "I know it's not the best habit to have.", kor: "이 습관이 물론 좋은 습관은 아니란 걸 알아." },
-                { eng: "But I've been doing it for so long that I'm kind of addicted to this rush.", kor: "근데 너무 오랫동안 해와서 이렇게 빨리 해내는 거에 약간 중독이 된 듯.." },
+            { eng: "I always like to get things done well ahead of time.", kor: "나는 항상 마감 시간 한참 전에 일을 마무리 하는 걸 좋아해." },
+            { eng: "It makes me feel more confident and better.", kor: "그렇게 해야 마음이 좀 더 편하고 자신감(확신)에 차거든." },
+            { eng: "And I like to feel like I have everything under control.", kor: "그리고 모든 게 내 뜻대로, 통제 하에 있다는 느낌을 좋아해." },
+            { eng: "Plus, if something unexpected comes up, I won't have to stress about finishing my work on time.", kor: "또 예상치 못한 뭔가가 생겼을 때, 제시간에 마무리 해야 한다는 생각에 전전긍긍하면서 스트레스 받지 않아도 돼." },
+            { eng: "Also, I don't perform well under such high pressure.", kor: "그리고 일단 내가 그런 압박이 있으면 성과가 잘 안 나기도 해." },
+            { eng: "I'm the opposite. I find that I work best under pressure.", kor: "나는 반대야. 나는 압박이 있어야 일을 잘 하더라고." },
+            { eng: "When the deadline is looming, I suddenly become super focused and efficient.", kor: "데드라인이 다가올 때 갑자기 미친듯이 집중이 되고 효율이 올라가더라니까." },
+            { eng: "And when I finally nail it right before the deadline, I feel this huge sense of catharsis.", kor: "그리고 데드라인 직전에 딱 끝내잖아? 이 카타르시스가 확 느껴진단 말이지." },
+            { eng: "I know it's not the best habit to have.", kor: "이 습관이 물론 좋은 습관은 아니란 걸 알아." },
+            { eng: "But I've been doing it for so long that I'm kind of addicted to this rush.", kor: "근데 너무 오랫동안 해와서 이렇게 빨리 해내는 거에 약간 중독이 된 듯.." },
             ],
             48: [
-                { eng: "I really want to get married and start a family someday.", kor: "나는 결혼을 해서 가정을 언젠가 꼭 꾸리고 싶어." },
-                { eng: "Like, it's so important to have that one person who's always there for me, no matter what.", kor: "무슨 일이 있든지 내 편이 되어주는 한 명이 있는 게 난 진짜 중요한 것 같아." },
-                { eng: "I guess I learned it from my parents. They just seem incredibly happy together.", kor: "우리 부모님한테서 느낀 것 같기도 해. 두 분이 같이 있을 때 너무 행복해보이거든." },
-                { eng: "And honestly I think the media is always pushing this idea of staying single.", kor: "그리고 솔직히 미디어에서 혼자 살도록 좀 부추기는 것 같아." },
-                { eng: "They only show us the bad parts of marriage but it can be really amazing if you find the right person.", kor: "결혼의 안 좋은 면만 보여주는데.. 제대로 된 사람만 찾으면 진짜 좋지 않을까?" },
-                { eng: "I don't think getting married is important to be happy in life.", kor: "나는 인생의 행복에 있어 결혼은 별로 중요하지 않다고 생각해." },
-                { eng: "I see many successful single people around me who are living fulfilling lives without marriage.", kor: "나는 결혼 안 하고도 충분히 만족스러운 삶을 사는, 성공한 싱글들이 주변에 많단 말이지." },
-                { eng: "Besides, I'm more focused on my career right now.", kor: "그리고 나는 지금 커리어 쌓는 게 더 중요해." },
-                { eng: "And marriage can be a trap that limits my growth.", kor: "결혼은 오히려 내 성장을 막는 트랩이 될 수도 있어." },
-                { eng: "I also feel like the pressure to get married is outdated and doesn't apply to our generation.", kor: "또 결혼을 해야 한다는 압박을 갖는 게 되게 구시대적이라 생각하고 우리 세대랑은 맞지 않는 것 같아." },
+            { eng: "I really want to get married and start a family someday.", kor: "나는 결혼을 해서 가정을 언젠가 꼭 꾸리고 싶어." },
+            { eng: "Like, it's so important to have that one person who's always there for me, no matter what.", kor: "무슨 일이 있든지 내 편이 되어주는 한 명이 있는 게 난 진짜 중요한 것 같아." },
+            { eng: "I guess I learned it from my parents. They just seem incredibly happy together.", kor: "우리 부모님한테서 느낀 것 같기도 해. 두 분이 같이 있을 때 너무 행복해보이거든." },
+            { eng: "And honestly I think the media is always pushing this idea of staying single.", kor: "그리고 솔직히 미디어에서 혼자 살도록 좀 부추기는 것 같아." },
+            { eng: "They only show us the bad parts of marriage but it can be really amazing if you find the right person.", kor: "결혼의 안 좋은 면만 보여주는데.. 제대로 된 사람만 찾으면 진짜 좋지 않을까?" },
+            { eng: "I don't think getting married is important to be happy in life.", kor: "나는 인생의 행복에 있어 결혼은 별로 중요하지 않다고 생각해." },
+            { eng: "I see many successful single people around me who are living fulfilling lives without marriage.", kor: "나는 결혼 안 하고도 충분히 만족스러운 삶을 사는, 성공한 싱글들이 주변에 많단 말이지." },
+            { eng: "Besides, I'm more focused on my career right now.", kor: "그리고 나는 지금 커리어 쌓는 게 더 중요해." },
+            { eng: "And marriage can be a trap that limits my growth.", kor: "결혼은 오히려 내 성장을 막는 트랩이 될 수도 있어." },
+            { eng: "I also feel like the pressure to get married is outdated and doesn't apply to our generation.", kor: "또 결혼을 해야 한다는 압박을 갖는 게 되게 구시대적이라 생각하고 우리 세대랑은 맞지 않는 것 같아." },
             ],
             49: [
-                { eng: "I've always thought that guys and girls can't truly be friends.", kor: "나는 남자랑 여자가 진짜로 찐친이 될 수는 없다고 생각하는 사람이야." },
-                { eng: "They might say they're just friends, but it's highly likely that one of them is a friend in disguise.", kor: "뭐 자기들 말로는 그냥 친구라고 할 수 있지 근데 높은 확률로 한 명은 위장일 거야." },
-                { eng: "Otherwise, why would so many couples get upset when their lover has a friend of the opposite sex?", kor: "안 그러면 왜 그렇게 많은 커플들이 상대가 친한 남사친/여사친 있으면 그렇게 화를 내겠어!" },
-                { eng: "I mean, I've seen so many people start out as friends but eventually become a couple.", kor: "나는 처음에는 친구로 시작했다가 결국 커플이 된 사례를 너무 많이 봤거든." },
-                { eng: "And let's face it, there are certain things you can't share with friends of the opposite gender.", kor: "그리고 솔직히 다른 성별 친구랑은 말 못하는 것들이 분명히 존재를 하잖아." },
-                { eng: "Friendship doesn't depend on gender. They can be friends just fine.", kor: "우정은 성별이랑 상관 없어 남녀 사이 친구 당연히 될 수 있지." },
-                { eng: "As long as both are mature enough to respect each other's boundaries.", kor: "둘 다 서로의 영역을 존중할 줄 아는 성숙한 사람이라면 말이야." },
-                { eng: "I mean, the heck, I have many guy friends myself.", kor: "아니 뭐 나부터도 일단 남사친 많은데!" },
-                { eng: "They are my good 'human network'.", kor: "다 나한테 좋은 인적 네트워크가 되잖아!" },
-                { eng: "And not everything is shared with all of your friends, if you think of it. There are different types of friendships.", kor: "그리고 솔직히 생각해보면 동성친구랑도 모든걸 다 공유하지 않아. 그냥 우정도 다 다르게 생긴거지." },
+            { eng: "I've always thought that guys and girls can't truly be friends.", kor: "나는 남자랑 여자가 진짜로 찐친이 될 수는 없다고 생각하는 사람이야." },
+            { eng: "They might say they're just friends, but it's highly likely that one of them is a friend in disguise.", kor: "뭐 자기들 말로는 그냥 친구라고 할 수 있지 근데 높은 확률로 한 명은 위장일 거야." },
+            { eng: "Otherwise, why would so many couples get upset when their lover has a friend of the opposite sex?", kor: "안 그러면 왜 그렇게 많은 커플들이 상대가 친한 남사친/여사친 있으면 그렇게 화를 내겠어!" },
+            { eng: "I mean, I've seen so many people start out as friends but eventually become a couple.", kor: "나는 처음에는 친구로 시작했다가 결국 커플이 된 사례를 너무 많이 봤거든." },
+            { eng: "And let's face it, there are certain things you can't share with friends of the opposite gender.", kor: "그리고 솔직히 다른 성별 친구랑은 말 못하는 것들이 분명히 존재를 하잖아." },
+            { eng: "Friendship doesn't depend on gender. They can be friends just fine.", kor: "우정은 성별이랑 상관 없어 남녀 사이 친구 당연히 될 수 있지." },
+            { eng: "As long as both are mature enough to respect each other's boundaries.", kor: "둘 다 서로의 영역을 존중할 줄 아는 성숙한 사람이라면 말이야." },
+            { eng: "I mean, the heck, I have many guy friends myself.", kor: "아니 뭐 나부터도 일단 남사친 많은데!" },
+            { eng: "They are my good 'human network'.", kor: "다 나한테 좋은 인적 네트워크가 되잖아!" },
+            { eng: "And not everything is shared with all of your friends, if you think of it. There are different types of friendships.", kor: "그리고 솔직히 생각해보면 동성친구랑도 모든걸 다 공유하지 않아. 그냥 우정도 다 다르게 생긴거지." },
             ],
             50: [
                 { eng: "I love online shopping because it's so easy and convenient!", kor: "나는 온라인 쇼핑이 좋아 너무 쉽고 편하잖아~" },
@@ -235,16 +234,16 @@
                 { eng: "And the best part is I can get it on the spot without waiting for several days.", kor: "가장 좋은 점은 며칠 기다릴 필요 없이 그 자리에서 바로 가져올 수 있다는 거야!" },
             ],
             51: [
-                { eng: "I prefer wednesdays off cuz I feel like the week just flies by so quickly.", kor: "나는 수공강이 더 좋아 왜냐면 한 주가 엄청 빨리 지나가는 기분이거든." },
-                { eng: "It's also like we have two weekends because we get to relax in the middle of the week.", kor: "또 일주일 중간에 쉬게 되니까 약간 주말이 두 번 있는 느낌이야" },
-                { eng: "If I work hard for just two days, I can take a break and this goes on throughout the semester.", kor: "이틀 동안 열심히 일하면 한 번 쉴 수 있고 이게 한 학기 동안 반복되니까 ㅎㅎ" },
-                { eng: "Also, it's less crowded on Wednesdays than on Fridays so I can relax better.", kor: "그리고 수요일이 금요일보다 사람이 덜 붐비니까 더 여유롭게 쉴 수 있어." },
-                { eng: "What's more, during exam season, it's nice to be able to take a bit of a breather.", kor: "또 시험 기간에 약간의 숨통을 돌릴 수 있다는 게 얼마나 좋은지 몰라." },
-                { eng: "Friday is the best day to unwind and let go of any stress from the week.", kor: "금요일이 한 주 동안 받은 스트레스를 풀고 쉬기에 가장 좋은 날이야." },
-                { eng: "First, the weekends feel longer so I can easily go on trips.", kor: "우선 주말이 더 길게 느껴지니까 여행을 쉽게 갈 수 있지." },
-                { eng: "Working for four days can be tough. But having three days off in a row is just so worth it.", kor: "4일동안 일하는 게 힘들 순 있지만, 3일 연속으로 쉬니까 가치가 있지." },
-                { eng: "I start to feel happy from Thursday mornings knowing that I just need to get through one more day.", kor: "이제 하루만 더 지나면 된다는 생각 때문에 목요일 아침부터 행복하기 시작해." },
-                { eng: "And it's a perfect day to hang out since many of my friends also have Fridays off.", kor: "그리고 내 친구들도 거의 다 금공강이라 같이 놀기에도 가장 좋은 날이야." },
+            { eng: "I prefer wednesdays off cuz I feel like the week just flies by so quickly.", kor: "나는 수공강이 더 좋아 왜냐면 한 주가 엄청 빨리 지나가는 기분이거든." },
+            { eng: "It's also like we have two weekends because we get to relax in the middle of the week.", kor: "또 일주일 중간에 쉬게 되니까 약간 주말이 두 번 있는 느낌이야" },
+            { eng: "If I work hard for just two days, I can take a break and this goes on throughout the semester.", kor: "이틀 동안 열심히 일하면 한 번 쉴 수 있고 이게 한 학기 동안 반복되니까 ㅎㅎ" },
+            { eng: "Also, it's less crowded on Wednesdays than on Fridays so I can relax better.", kor: "그리고 수요일이 금요일보다 사람이 덜 붐비니까 더 여유롭게 쉴 수 있어." },
+            { eng: "What's more, during exam season, it's nice to be able to take a bit of a breather.", kor: "또 시험 기간에 약간의 숨통을 돌릴 수 있다는 게 얼마나 좋은지 몰라." },
+            { eng: "Friday is the best day to unwind and let go of any stress from the week.", kor: "금요일이 한 주 동안 받은 스트레스를 풀고 쉬기에 가장 좋은 날이야." },
+            { eng: "First, the weekends feel longer so I can easily go on trips.", kor: "우선 주말이 더 길게 느껴지니까 여행을 쉽게 갈 수 있지." },
+            { eng: "Working for four days can be tough. But having three days off in a row is just so worth it.", kor: "4일동안 일하는 게 힘들 순 있지만, 3일 연속으로 쉬니까 가치가 있지." },
+            { eng: "I start to feel happy from Thursday mornings knowing that I just need to get through one more day.", kor: "이제 하루만 더 지나면 된다는 생각 때문에 목요일 아침부터 행복하기 시작해." },
+            { eng: "And it's a perfect day to hang out since many of my friends also have Fridays off.", kor: "그리고 내 친구들도 거의 다 금공강이라 같이 놀기에도 가장 좋은 날이야." },
             ],
             52: [
                 { eng: "I think we don't need to study English as hard as before.", kor: "나는 예전처럼 열심히 영어 공부 할 필요 없다고 생각해." },
@@ -455,7 +454,7 @@
                             setSyncId(user.uid);
                             localStorage.removeItem('savedSyncId');
                         } else {
-                            console.warn("내 데이터에 접근할 수 없습니다. 배포된 앱이라면 Firestore 보안 규칙을 확인해주세요.");
+                            console.warn("내 데이터에 접근할 수 없습니다.");
                         }
                     }
                 });
@@ -502,6 +501,19 @@
                     completedDates: newDates !== undefined ? newDates : completedDates,
                     timeLeft: newTime !== undefined ? newTime : timeLeft
                 }, { merge: true });
+            };
+
+            const loadSampleData = () => {
+                if (!preloadedData[currentDay]) {
+                    alert("이 날짜의 샘플 데이터가 없습니다.");
+                    return;
+                }
+                if (confirm("현재 입력된 내용을 지우고, 최신 샘플 데이터로 덮어씌우시겠습니까?")) {
+                    const newData = preloadedData[currentDay];
+                    setSentences(newData);
+                    saveDayData(newData, repetitionCount); 
+                    alert("업데이트 되었습니다!");
+                }
             };
 
             useEffect(() => {
@@ -925,13 +937,28 @@
                                             </div>
                                             
                                             {/* Topic Display Section */}
-                                            <div className="mt-6 text-center">
+                                            <div className="mt-6 text-center relative group">
                                                 <div className="inline-block bg-white px-4 py-1 rounded-full border border-purple-100 shadow-sm mb-2">
                                                     <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Today's Topic</span>
                                                 </div>
-                                                <h3 className="text-lg md:text-xl font-bold text-slate-700 break-keep">
-                                                    {dayTopics[currentDay] || "자유 주제 (Free Talk)"}
-                                                </h3>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <h3 className="text-lg md:text-xl font-bold text-slate-700 break-keep">
+                                                        {dayTopics[currentDay] || "자유 주제 (Free Talk)"}
+                                                    </h3>
+                                                    {/* 💡 새로 추가된 리프레시 버튼: 샘플 데이터 강제 로드 */}
+                                                    {preloadedData[currentDay] && (
+                                                        <button 
+                                                            onClick={loadSampleData}
+                                                            className="text-slate-300 hover:text-purple-500 transition-colors p-2"
+                                                            title="최신 샘플 데이터로 덮어쓰기 (Refresh)"
+                                                        >
+                                                            <RefreshCw size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-[#8B5CF6] mt-2 opacity-70">
+                                                    주제에 맞춰 10문장을 큰 소리로 연습해보세요!
+                                                </p>
                                             </div>
                                         </div>
 
