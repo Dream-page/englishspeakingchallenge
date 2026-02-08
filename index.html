@@ -89,6 +89,7 @@
 
         // --- Preloaded Data (Day 1~6, 45~60) ---
         const preloadedData = {
+            // (데이터 내용은 이전과 동일하게 유지됩니다)
             1: [
                 { eng: "Here is what my typical morning looks like.", kor: "제 전형적인 아침은 이렇게 생겼습니다." },
                 { eng: "I'm not really a morning person.", kor: "저는 딱히 아침형 인간은 아니에요." },
@@ -392,15 +393,21 @@
             // --- Timer States (Updated) ---
             const [timeLeft, setTimeLeft] = useState(3600);
             const [isActive, setIsActive] = useState(false);
-            const [timerMode, setTimerMode] = useState(60); // 30 or 60
+            // timerMode 제거
             const [timerEndTime, setTimerEndTime] = useState(null); // 목표 종료 시간 (타임스탬프)
+            // 오늘 날짜를 기억하여 리셋 여부 확인
+            const [lastTimerDate, setLastTimerDate] = useState(null);
 
             const [showCelebration, setShowCelebration] = useState(false);
             const [hideEnglish, setHideEnglish] = useState(false);
             const [revealedIndices, setRevealedIndices] = useState([]);
             const [newNoteEng, setNewNoteEng] = useState("");
             const [newNoteKor, setNewNoteKor] = useState("");
+
             const [repetitionCount, setRepetitionCount] = useState(0);
+            const [silverAwarded, setSilverAwarded] = useState(false); // 은색 도장 획득 여부 로컬 상태
+
+            // --- Pagination States ---
             const [notesPage, setNotesPage] = useState(1);
             const NOTES_PER_PAGE = 10;
 
@@ -433,7 +440,6 @@
                 const targetUserId = syncId || user.uid;
                 const dayDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', `day_${currentDay}`);
                 
-                // ... (Day Data 로직 동일)
                  const unsubscribe = onSnapshot(dayDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -456,8 +462,6 @@
                             alert("동기화 ID가 만료되었거나 권한이 없습니다. 자동으로 내 ID로 초기화합니다.");
                             setSyncId(user.uid);
                             localStorage.removeItem('savedSyncId');
-                        } else {
-                            console.warn("내 데이터에 접근할 수 없습니다. 배포된 앱이라면 Firestore 보안 규칙을 확인해주세요.");
                         }
                     }
                 });
@@ -475,23 +479,37 @@
                         const data = docSnap.data();
                         setNotes(data.notes || []);
                         
-                        // 날짜 데이터 호환성 처리 (문자열 배열 -> 객체 배열)
                         let loadedDates = data.completedDates || [];
                         if (loadedDates.length > 0 && typeof loadedDates[0] === 'string') {
                             loadedDates = loadedDates.map(d => ({ date: d, type: '60' }));
                         }
                         setCompletedDates(loadedDates);
 
-                        // 타이머 상태 동기화
-                        if (data.timerEndTime) {
-                            setTimerEndTime(data.timerEndTime);
-                            setTimerMode(data.timerMode || 60);
-                            setIsActive(true);
+                        // 날짜 리셋 로직
+                        const today = new Date().toISOString().split('T')[0];
+                        if (data.lastTimerDate !== today) {
+                             // 날짜가 바뀌었으면 리셋
+                             setTimeLeft(3600);
+                             setTimerEndTime(null);
+                             setIsActive(false);
+                             setSilverAwarded(false);
+                             // 서버에도 업데이트 (단, 바로 저장하면 무한루프 가능성 있으므로 로컬 상태만 변경하고 사용자 액션 시 저장되도록 하거나, 여기서 저장)
+                             // 여기서는 로컬 상태만 업데이트하고, 사용자가 타이머를 시작/조작할 때 저장되도록 함.
+                             // 하지만 날짜 필드를 업데이트 해줘야 다음 로드 때 또 리셋 안됨.
+                             if (data.lastTimerDate) { // 처음 로드가 아니고 날짜가 바뀐 경우에만 저장
+                                 saveGlobalData({ lastTimerDate: today, timeLeft: 3600, timerEndTime: null, silverAwarded: false });
+                             }
                         } else {
-                            setTimerEndTime(null);
-                            setIsActive(false);
-                            // 저장된 남은 시간이 있으면 불러오기, 없으면 모드에 맞게
-                            if (data.savedTimeLeft) setTimeLeft(data.savedTimeLeft);
+                            // 같은 날짜면 로드
+                            if (data.timerEndTime) {
+                                setTimerEndTime(data.timerEndTime);
+                                setIsActive(true);
+                            } else {
+                                setTimerEndTime(null);
+                                setIsActive(false);
+                                if (data.savedTimeLeft !== undefined) setTimeLeft(data.savedTimeLeft);
+                            }
+                            if (data.silverAwarded !== undefined) setSilverAwarded(data.silverAwarded);
                         }
                     }
                 }, (error) => {
@@ -516,7 +534,9 @@
                 if (!user) return;
                 const targetUserId = syncId || user.uid;
                 const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
-                await setDoc(globalDocRef, updates, { merge: true });
+                // 현재 날짜도 함께 저장
+                const today = new Date().toISOString().split('T')[0];
+                await setDoc(globalDocRef, { ...updates, lastTimerDate: today }, { merge: true });
             };
 
             // --- Timer Logic (Background Supported) ---
@@ -527,82 +547,87 @@
                     interval = setInterval(() => {
                         const now = Date.now();
                         const diff = Math.ceil((timerEndTime - now) / 1000);
+                        const timeElapsed = 3600 - diff; // 60분(3600초) 기준 경과 시간
+
+                        // 30분(1800초) 경과 체크 (1800초 남음)
+                        // diff가 1800이 되는 순간 또는 그 이하로 처음 떨어졌을 때
+                        if (diff <= 1800 && !silverAwarded) {
+                            handleGoalAchieved('30');
+                            setSilverAwarded(true);
+                            saveGlobalData({ silverAwarded: true });
+                        }
 
                         if (diff <= 0) {
                             setTimeLeft(0);
                             setIsActive(false);
                             setTimerEndTime(null);
-                            handleGoalAchieved();
-                            saveGlobalData({ timerEndTime: null, savedTimeLeft: 0 }); // 타이머 종료 저장
+                            handleGoalAchieved('60');
+                            saveGlobalData({ timerEndTime: null, savedTimeLeft: 0, silverAwarded: true }); 
                         } else {
                             setTimeLeft(diff);
                         }
                     }, 1000);
-                } else if (!isActive) {
-                    // 비활성 상태일 때 시간은 흐르지 않음 (UI상)
                 }
 
                 return () => clearInterval(interval);
-            }, [isActive, timerEndTime]);
+            }, [isActive, timerEndTime, silverAwarded]);
 
             const handleStartTimer = () => {
                 if (isActive) {
                     // 일시 정지 (Pause)
                     setIsActive(false);
                     setTimerEndTime(null);
-                    saveGlobalData({ timerEndTime: null, savedTimeLeft: timeLeft }); // 남은 시간 저장
+                    saveGlobalData({ timerEndTime: null, savedTimeLeft: timeLeft }); 
                 } else {
                     // 시작 (Start)
-                    // 남은 시간이 없거나(0) 완료된 상태면 새로 시작, 아니면 이어서(Resume)
-                    const duration = timeLeft > 0 ? timeLeft : (timerMode * 60); 
+                    const duration = timeLeft > 0 ? timeLeft : 3600; 
                     const newEndTime = Date.now() + duration * 1000;
                     
                     setTimerEndTime(newEndTime);
                     setIsActive(true);
-                    saveGlobalData({ timerEndTime: newEndTime, timerMode: timerMode, savedTimeLeft: duration });
+                    saveGlobalData({ timerEndTime: newEndTime, savedTimeLeft: duration });
                 }
             };
 
             const handleResetTimer = () => {
                 setIsActive(false);
                 setTimerEndTime(null);
-                const defaultTime = timerMode * 60;
-                setTimeLeft(defaultTime);
-                saveGlobalData({ timerEndTime: null, savedTimeLeft: defaultTime });
+                setTimeLeft(3600);
+                setSilverAwarded(false);
+                saveGlobalData({ timerEndTime: null, savedTimeLeft: 3600, silverAwarded: false });
             };
 
-            const toggleTimerMode = () => {
-                const newMode = timerMode === 60 ? 30 : 60;
-                setTimerMode(newMode);
-                setIsActive(false);
-                setTimerEndTime(null);
-                setTimeLeft(newMode * 60);
-                saveGlobalData({ timerMode: newMode, timerEndTime: null, savedTimeLeft: newMode * 60 });
-            };
-
-            const handleGoalAchieved = () => {
+            const handleGoalAchieved = (type) => {
                 const d = new Date();
                 const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 
-                // 이미 오늘 같은 타입의 도장이 있는지 확인
-                const alreadyDone = completedDates.some(d => d.date === today && d.type === String(timerMode));
+                // 기존 기록 확인
+                const existingRecordIndex = completedDates.findIndex(d => d.date === today);
                 
-                if (!alreadyDone) {
-                    const newRecord = { date: today, type: String(timerMode) };
-                    // 같은 날짜의 기존 기록을 유지할지 덮어쓸지는 선택. 여기서는 '추가' 개념 (중복 허용 안함)
-                    // 단순화를 위해 같은 날짜면 덮어쓰거나, 아니면 배열에 추가. 
-                    // UI상 하루에 하나만 보여준다면: 60분이 우선순위가 높으므로 60분이 있으면 30분은 무시?
-                    // -> 그냥 배열에 다 넣고 렌더링 때 우선순위 처리
-                    const newDates = [...completedDates, newRecord];
-                    setCompletedDates(newDates);
-                    saveGlobalData({ completedDates: newDates, timerEndTime: null });
+                let newDates = [...completedDates];
+                if (existingRecordIndex !== -1) {
+                    // 이미 오늘 기록이 있음
+                    if (type === '60') {
+                        // 60분 달성 시 30분 기록을 덮어씀 (업그레이드)
+                         newDates[existingRecordIndex] = { date: today, type: '60' };
+                    } 
+                    // type이 30이면 이미 기록이 있으므로(30이든 60이든) 무시
+                } else {
+                    // 오늘 기록 없음 -> 추가
+                    newDates.push({ date: today, type: type });
+                }
+                
+                setCompletedDates(newDates);
+                saveGlobalData({ completedDates: newDates, timerEndTime: isActive ? timerEndTime : null }); // timerEndTime 유지 여부 주의
+                
+                if (type === '60') {
                     setShowCelebration(true);
                     setTimeout(() => setShowCelebration(false), 5000);
                 }
             };
 
-            // ... (Sentence update, highlight, note logic - same as before) ...
-            const updateSentence = (index, field, value) => {
+            // ... (Rest of logic: updateSentence, toggleHighlight, toggleRepetition, speakText, addNote, deleteNote, editing...) ...
+             const updateSentence = (index, field, value) => {
                 const newSentences = [...sentences];
                 newSentences[index] = { ...newSentences[index], [field]: value };
                 setSentences(newSentences);
@@ -700,7 +725,6 @@
                 }
             };
 
-            // ... (Day Navigation logic) ...
              const changeDay = (direction) => {
                 const newDay = direction === 'next' ? currentDay + 1 : currentDay - 1;
                 if (newDay > 0) {
@@ -752,24 +776,19 @@
 
             return (
                 <div className="min-h-screen bg-[#F3F4F6] text-slate-800 font-sans p-4 md:p-8 selection:bg-[#B692F6] selection:text-white">
-                    {/* ... (Sync Modal & Celebration Overlay Same as before) ... */}
+                    {/* ... (Sync Modal & Celebration Overlay same) ... */}
                      {showSyncModal && (
                         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm p-4">
                             <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-md w-full animate-bounce-up">
                                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-[#7C3AED]">
                                     <User size={24}/> 동기화 설정 (Sync)
                                 </h3>
-                                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                                    여러 기기에서 기록을 공유하려면, 아래 <strong>내 ID</strong>를 복사해서 다른 기기에 입력하세요.
-                                </p>
-                                
                                 <div className="bg-slate-100 p-3 rounded-xl mb-4 flex items-center justify-between">
                                     <code className="text-xs md:text-sm font-mono text-slate-600 break-all">{user?.uid}</code>
                                     <button onClick={() => navigator.clipboard.writeText(user?.uid)} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-500">
                                         <Copy size={16}/>
                                     </button>
                                 </div>
-
                                 <div className="border-t pt-4">
                                     <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">다른 기기의 ID 입력하기</label>
                                     <input 
@@ -781,7 +800,6 @@
                                     />
                                     <p className="text-xs text-slate-400 mt-2">* 입력 후 '완료'를 누르면 기기에 저장됩니다.</p>
                                 </div>
-
                                 <button onClick={handleSyncSave} className="w-full mt-6 bg-[#7C3AED] text-white py-3 rounded-xl font-bold hover:bg-[#6D28D9] transition-colors">
                                     완료 (Done)
                                 </button>
@@ -793,13 +811,12 @@
                             <div className="bg-white p-8 rounded-3xl shadow-2xl text-center transform animate-bounce-up border-4 border-[#B692F6]">
                                 <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
                                 <h2 className="text-3xl font-bold mb-2 text-[#7C3AED]">Goal Achieved!</h2>
-                                <p className="text-gray-600">오늘 목표 달성! 도장이 찍혔어요 쾅! 🎉</p>
+                                <p className="text-gray-600">오늘 1시간 공부 달성! 도장이 찍혔어요 쾅! 🎉</p>
                             </div>
                         </div>
                     )}
 
                     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        
                         {/* Header */}
                          <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                             <div className="flex items-center gap-4">
@@ -834,7 +851,6 @@
                                     </button>
                                 </div>
                             </div>
-
                             <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                                 <button onClick={() => setShowSyncModal(true)} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-[#7C3AED] transition-colors" title="Sync across devices">
                                     <User size={20}/>
@@ -849,12 +865,12 @@
                         {/* LEFT COLUMN */}
                         <div className="lg:col-span-4 space-y-6">
                             
-                            {/* Timer (Updated) */}
+                            {/* Timer (Updated to Single 60min Mode with milestones) */}
                             <div className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/60 border border-slate-100 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-slate-100">
                                     <div 
                                         className="h-full bg-gradient-to-r from-[#C4B5FD] to-[#7C3AED] transition-all duration-1000 ease-linear"
-                                        style={{ width: `${Math.min(((timerMode * 60 - timeLeft) / (timerMode * 60)) * 100, 100)}%` }}
+                                        style={{ width: `${Math.min(((3600 - timeLeft) / 3600) * 100, 100)}%` }}
                                     />
                                 </div>
                                 <div className="flex justify-between items-center mb-6 mt-2">
@@ -862,12 +878,7 @@
                                         <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-red-400 animate-pulse' : 'bg-slate-300'}`}></div>
                                         Timer
                                     </h3>
-                                    <button 
-                                        onClick={toggleTimerMode}
-                                        className="text-xs font-bold text-[#7C3AED] bg-[#F3E8FF] px-3 py-1 rounded-full hover:bg-purple-200 transition-colors flex items-center gap-1"
-                                    >
-                                        <Clock size={12}/> {timerMode}min Mode
-                                    </button>
+                                    <span className="text-xs font-bold text-[#7C3AED] bg-[#F3E8FF] px-3 py-1 rounded-full">60min Goal</span>
                                 </div>
                                 <div className="text-center mb-8">
                                     <div className="text-7xl font-black text-slate-800 tracking-tighter tabular-nums">
@@ -917,7 +928,6 @@
                                         const day = i + 1;
                                         const dateStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                         
-                                        // 도장 확인 로직 수정: 배열 내 객체 확인
                                         const record = completedDates.find(d => d.date === dateStr);
                                         const isCompleted = !!record;
                                         const stampType = record ? record.type : null;
@@ -932,10 +942,10 @@
                                         if (isCompleted) {
                                             if (stampType === '30') {
                                                 stampStyle = 'bg-slate-200 border-slate-300 text-slate-600 shadow-md shadow-slate-100/20 scale-110';
-                                                stampText = "☆"; // 30분은 은색 별
+                                                stampText = "☆"; // 30분
                                             } else {
                                                 stampStyle = 'bg-yellow-400 border-yellow-400 text-black shadow-lg shadow-yellow-400/20 scale-110';
-                                                stampText = "★"; // 60분은 금색 별
+                                                stampText = "★"; // 60분
                                             }
                                         } else if (isToday) {
                                             stampStyle = 'bg-white/10 border-[#7C3AED] text-white ring-2 ring-[#7C3AED]/50';
@@ -961,7 +971,7 @@
 
                         {/* RIGHT COLUMN (Content) */}
                         <div className="lg:col-span-8">
-                           {/* ... (Right column content same as previous, including refresh button fix) ... */}
+                           {/* ... (Right column contents - Tabs, Challenge, Notes) ... */}
                             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/50 min-h-full">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                     <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
