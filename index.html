@@ -33,7 +33,7 @@
 <body>
     <div id="root"></div>
 
-    <!-- 4. 메인 React 코드 (data-presets에서 env 제거하여 import 구문 유지) -->
+    <!-- 4. 메인 React 코드 -->
     <script type="text/babel" data-type="module" data-presets="react">
         import React, { useState, useEffect, useCallback, useRef } from 'react';
         import ReactDOM from 'react-dom/client';
@@ -89,7 +89,6 @@
 
         // --- Preloaded Data (Day 1~6, 45~60) ---
         const preloadedData = {
-            // (데이터 내용은 이전과 동일하게 유지됩니다)
             1: [
                 { eng: "Here is what my typical morning looks like.", kor: "제 전형적인 아침은 이렇게 생겼습니다." },
                 { eng: "I'm not really a morning person.", kor: "저는 딱히 아침형 인간은 아니에요." },
@@ -162,7 +161,7 @@
                 { eng: "So having this full time job is exactly what I wanted.", kor: "그래서 정규직으로 일하는 게 제가 딱 원했던 거였답니다." },
                 { eng: "It can be challenging sometimes but so far I enjoy working here at SamSung.", kor: "일이 가끔 힘들긴 하지만 아직까지는 삼성에서 일하는 게 즐거워요!" }
             ],
-            // Day 7~20 Placeholder (User fills in)
+            // Day 7~20 Placeholder
             7: [], 8: [], 9: [], 10: [],
             11: [], 12: [], 13: [], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [],
             
@@ -179,52 +178,52 @@
                 { eng: "So I need to get out, move around, see new things, and get some fresh air.", kor: "그래서 어차피 나가서 좀 돌아다니고 새로운 것도 좀 보고 바람 좀 쐬어야 해." }
             ],
             46: [
-            { eng: "Having a joint account could be awesome.", kor: "데이트 통장 만드는 거? 좋은 것 같아." },
-            { eng: "Because with that, it's going to be way easier to plan the dates around a budget.", kor: "왜냐? 그게 있으면 가진 돈에 맞게 데이트 계획 짜기가 훨씬 쉬워지잖아." },
-            { eng: "And spliting the bills on the spot can be too business-like, you know?", kor: "그리고 그 자리에서 돈 나눠내는 거 너무 사무적이고 딱딱한 것 같아." },
-            { eng: "You won't have to worry about those awkward discussions about who's paying for what.", kor: "'누가 뭘 내냐'와 같은 어색한 대화를 하는 거에 대해서 더 이상 걱정하지 않아도 될거야." },
-            { eng: "It's also a good way to avoid fights about money cuz you both are on the same page.", kor: "그리고 또 둘이 같은 마음이기 때문에 돈에 대해서 싸울 일도 적어지지." },
-            { eng: "Call me old-fashioned, but I don't really like the idea of having a joint account.", kor: "날 구닥다리라고 생각해도 좋은데 나는 데이트 통장 별로인 것 같아." },
-            { eng: "I mean, what are you going to do if you guys break up?", kor: "그니까.. 너네 헤어지면 어떡할 건데??" },
-            { eng: "It would be really awkward if you ask him for your money back.", kor: "걔한테 내 돈 다시 돌려달라고 부탁하면 얼마나 어색하겠어." },
-            { eng: "And spliting the bills equally seems too calculated? Fine~ we could just take turns paying for dates.", kor: "돈 반반씩 내는게 너무 계산적이라고? 그럼 번갈아가면서 내면 되잖아~" },
-            { eng: "And I think if you don't have enough trust with him, things can get even uglier.", kor: "그리고 특히 믿음이 안 갈 때 하면, 상황이 훨씬 더 악화될 수 있을거라 생각해." },
+                { eng: "Having a joint account could be awesome.", kor: "데이트 통장 만드는 거? 좋은 것 같아." },
+                { eng: "Because with that, it's going to be way easier to plan the dates around a budget.", kor: "왜냐? 그게 있으면 가진 돈에 맞게 데이트 계획 짜기가 훨씬 쉬워지잖아." },
+                { eng: "And spliting the bills on the spot can be too business-like, you know?", kor: "그리고 그 자리에서 돈 나눠내는 거 너무 사무적이고 딱딱한 것 같아." },
+                { eng: "You won't have to worry about those awkward discussions about who's paying for what.", kor: "'누가 뭘 내냐'와 같은 어색한 대화를 하는 거에 대해서 더 이상 걱정하지 않아도 될거야." },
+                { eng: "It's also a good way to avoid fights about money cuz you both are on the same page.", kor: "그리고 또 둘이 같은 마음이기 때문에 돈에 대해서 싸울 일도 적어지지." },
+                { eng: "Call me old-fashioned, but I don't really like the idea of having a joint account.", kor: "날 구닥다리라고 생각해도 좋은데 나는 데이트 통장 별로인 것 같아." },
+                { eng: "I mean, what are you going to do if you guys break up?", kor: "그니까.. 너네 헤어지면 어떡할 건데??" },
+                { eng: "It would be really awkward if you ask him for your money back.", kor: "걔한테 내 돈 다시 돌려달라고 부탁하면 얼마나 어색하겠어." },
+                { eng: "And spliting the bills equally seems too calculated? Fine~ we could just take turns paying for dates.", kor: "돈 반반씩 내는게 너무 계산적이라고? 그럼 번갈아가면서 내면 되잖아~" },
+                { eng: "And I think if you don't have enough trust with him, things can get even uglier.", kor: "그리고 특히 믿음이 안 갈 때 하면, 상황이 훨씬 더 악화될 수 있을거라 생각해." },
             ],
             47: [
-            { eng: "I always like to get things done well ahead of time.", kor: "나는 항상 마감 시간 한참 전에 일을 마무리 하는 걸 좋아해." },
-            { eng: "It makes me feel more confident and better.", kor: "그렇게 해야 마음이 좀 더 편하고 자신감(확신)에 차거든." },
-            { eng: "And I like to feel like I have everything under control.", kor: "그리고 모든 게 내 뜻대로, 통제 하에 있다는 느낌을 좋아해." },
-            { eng: "Plus, if something unexpected comes up, I won't have to stress about finishing my work on time.", kor: "또 예상치 못한 뭔가가 생겼을 때, 제시간에 마무리 해야 한다는 생각에 전전긍긍하면서 스트레스 받지 않아도 돼." },
-            { eng: "Also, I don't perform well under such high pressure.", kor: "그리고 일단 내가 그런 압박이 있으면 성과가 잘 안 나기도 해." },
-            { eng: "I'm the opposite. I find that I work best under pressure.", kor: "나는 반대야. 나는 압박이 있어야 일을 잘 하더라고." },
-            { eng: "When the deadline is looming, I suddenly become super focused and efficient.", kor: "데드라인이 다가올 때 갑자기 미친듯이 집중이 되고 효율이 올라가더라니까." },
-            { eng: "And when I finally nail it right before the deadline, I feel this huge sense of catharsis.", kor: "그리고 데드라인 직전에 딱 끝내잖아? 이 카타르시스가 확 느껴진단 말이지." },
-            { eng: "I know it's not the best habit to have.", kor: "이 습관이 물론 좋은 습관은 아니란 걸 알아." },
-            { eng: "But I've been doing it for so long that I'm kind of addicted to this rush.", kor: "근데 너무 오랫동안 해와서 이렇게 빨리 해내는 거에 약간 중독이 된 듯.." },
+                { eng: "I always like to get things done well ahead of time.", kor: "나는 항상 마감 시간 한참 전에 일을 마무리 하는 걸 좋아해." },
+                { eng: "It makes me feel more confident and better.", kor: "그렇게 해야 마음이 좀 더 편하고 자신감(확신)에 차거든." },
+                { eng: "And I like to feel like I have everything under control.", kor: "그리고 모든 게 내 뜻대로, 통제 하에 있다는 느낌을 좋아해." },
+                { eng: "Plus, if something unexpected comes up, I won't have to stress about finishing my work on time.", kor: "또 예상치 못한 뭔가가 생겼을 때, 제시간에 마무리 해야 한다는 생각에 전전긍긍하면서 스트레스 받지 않아도 돼." },
+                { eng: "Also, I don't perform well under such high pressure.", kor: "그리고 일단 내가 그런 압박이 있으면 성과가 잘 안 나기도 해." },
+                { eng: "I'm the opposite. I find that I work best under pressure.", kor: "나는 반대야. 나는 압박이 있어야 일을 잘 하더라고." },
+                { eng: "When the deadline is looming, I suddenly become super focused and efficient.", kor: "데드라인이 다가올 때 갑자기 미친듯이 집중이 되고 효율이 올라가더라니까." },
+                { eng: "And when I finally nail it right before the deadline, I feel this huge sense of catharsis.", kor: "그리고 데드라인 직전에 딱 끝내잖아? 이 카타르시스가 확 느껴진단 말이지." },
+                { eng: "I know it's not the best habit to have.", kor: "이 습관이 물론 좋은 습관은 아니란 걸 알아." },
+                { eng: "But I've been doing it for so long that I'm kind of addicted to this rush.", kor: "근데 너무 오랫동안 해와서 이렇게 빨리 해내는 거에 약간 중독이 된 듯.." },
             ],
             48: [
-            { eng: "I really want to get married and start a family someday.", kor: "나는 결혼을 해서 가정을 언젠가 꼭 꾸리고 싶어." },
-            { eng: "Like, it's so important to have that one person who's always there for me, no matter what.", kor: "무슨 일이 있든지 내 편이 되어주는 한 명이 있는 게 난 진짜 중요한 것 같아." },
-            { eng: "I guess I learned it from my parents. They just seem incredibly happy together.", kor: "우리 부모님한테서 느낀 것 같기도 해. 두 분이 같이 있을 때 너무 행복해보이거든." },
-            { eng: "And honestly I think the media is always pushing this idea of staying single.", kor: "그리고 솔직히 미디어에서 혼자 살도록 좀 부추기는 것 같아." },
-            { eng: "They only show us the bad parts of marriage but it can be really amazing if you find the right person.", kor: "결혼의 안 좋은 면만 보여주는데.. 제대로 된 사람만 찾으면 진짜 좋지 않을까?" },
-            { eng: "I don't think getting married is important to be happy in life.", kor: "나는 인생의 행복에 있어 결혼은 별로 중요하지 않다고 생각해." },
-            { eng: "I see many successful single people around me who are living fulfilling lives without marriage.", kor: "나는 결혼 안 하고도 충분히 만족스러운 삶을 사는, 성공한 싱글들이 주변에 많단 말이지." },
-            { eng: "Besides, I'm more focused on my career right now.", kor: "그리고 나는 지금 커리어 쌓는 게 더 중요해." },
-            { eng: "And marriage can be a trap that limits my growth.", kor: "결혼은 오히려 내 성장을 막는 트랩이 될 수도 있어." },
-            { eng: "I also feel like the pressure to get married is outdated and doesn't apply to our generation.", kor: "또 결혼을 해야 한다는 압박을 갖는 게 되게 구시대적이라 생각하고 우리 세대랑은 맞지 않는 것 같아." },
+                { eng: "I really want to get married and start a family someday.", kor: "나는 결혼을 해서 가정을 언젠가 꼭 꾸리고 싶어." },
+                { eng: "Like, it's so important to have that one person who's always there for me, no matter what.", kor: "무슨 일이 있든지 내 편이 되어주는 한 명이 있는 게 난 진짜 중요한 것 같아." },
+                { eng: "I guess I learned it from my parents. They just seem incredibly happy together.", kor: "우리 부모님한테서 느낀 것 같기도 해. 두 분이 같이 있을 때 너무 행복해보이거든." },
+                { eng: "And honestly I think the media is always pushing this idea of staying single.", kor: "그리고 솔직히 미디어에서 혼자 살도록 좀 부추기는 것 같아." },
+                { eng: "They only show us the bad parts of marriage but it can be really amazing if you find the right person.", kor: "결혼의 안 좋은 면만 보여주는데.. 제대로 된 사람만 찾으면 진짜 좋지 않을까?" },
+                { eng: "I don't think getting married is important to be happy in life.", kor: "나는 인생의 행복에 있어 결혼은 별로 중요하지 않다고 생각해." },
+                { eng: "I see many successful single people around me who are living fulfilling lives without marriage.", kor: "나는 결혼 안 하고도 충분히 만족스러운 삶을 사는, 성공한 싱글들이 주변에 많단 말이지." },
+                { eng: "Besides, I'm more focused on my career right now.", kor: "그리고 나는 지금 커리어 쌓는 게 더 중요해." },
+                { eng: "And marriage can be a trap that limits my growth.", kor: "결혼은 오히려 내 성장을 막는 트랩이 될 수도 있어." },
+                { eng: "I also feel like the pressure to get married is outdated and doesn't apply to our generation.", kor: "또 결혼을 해야 한다는 압박을 갖는 게 되게 구시대적이라 생각하고 우리 세대랑은 맞지 않는 것 같아." },
             ],
             49: [
-            { eng: "I've always thought that guys and girls can't truly be friends.", kor: "나는 남자랑 여자가 진짜로 찐친이 될 수는 없다고 생각하는 사람이야." },
-            { eng: "They might say they're just friends, but it's highly likely that one of them is a friend in disguise.", kor: "뭐 자기들 말로는 그냥 친구라고 할 수 있지 근데 높은 확률로 한 명은 위장일 거야." },
-            { eng: "Otherwise, why would so many couples get upset when their lover has a friend of the opposite sex?", kor: "안 그러면 왜 그렇게 많은 커플들이 상대가 친한 남사친/여사친 있으면 그렇게 화를 내겠어!" },
-            { eng: "I mean, I've seen so many people start out as friends but eventually become a couple.", kor: "나는 처음에는 친구로 시작했다가 결국 커플이 된 사례를 너무 많이 봤거든." },
-            { eng: "And let's face it, there are certain things you can't share with friends of the opposite gender.", kor: "그리고 솔직히 다른 성별 친구랑은 말 못하는 것들이 분명히 존재를 하잖아." },
-            { eng: "Friendship doesn't depend on gender. They can be friends just fine.", kor: "우정은 성별이랑 상관 없어 남녀 사이 친구 당연히 될 수 있지." },
-            { eng: "As long as both are mature enough to respect each other's boundaries.", kor: "둘 다 서로의 영역을 존중할 줄 아는 성숙한 사람이라면 말이야." },
-            { eng: "I mean, the heck, I have many guy friends myself.", kor: "아니 뭐 나부터도 일단 남사친 많은데!" },
-            { eng: "They are my good 'human network'.", kor: "다 나한테 좋은 인적 네트워크가 되잖아!" },
-            { eng: "And not everything is shared with all of your friends, if you think of it. There are different types of friendships.", kor: "그리고 솔직히 생각해보면 동성친구랑도 모든걸 다 공유하지 않아. 그냥 우정도 다 다르게 생긴거지." },
+                { eng: "I've always thought that guys and girls can't truly be friends.", kor: "나는 남자랑 여자가 진짜로 찐친이 될 수는 없다고 생각하는 사람이야." },
+                { eng: "They might say they're just friends, but it's highly likely that one of them is a friend in disguise.", kor: "뭐 자기들 말로는 그냥 친구라고 할 수 있지 근데 높은 확률로 한 명은 위장일 거야." },
+                { eng: "Otherwise, why would so many couples get upset when their lover has a friend of the opposite sex?", kor: "안 그러면 왜 그렇게 많은 커플들이 상대가 친한 남사친/여사친 있으면 그렇게 화를 내겠어!" },
+                { eng: "I mean, I've seen so many people start out as friends but eventually become a couple.", kor: "나는 처음에는 친구로 시작했다가 결국 커플이 된 사례를 너무 많이 봤거든." },
+                { eng: "And let's face it, there are certain things you can't share with friends of the opposite gender.", kor: "그리고 솔직히 다른 성별 친구랑은 말 못하는 것들이 분명히 존재를 하잖아." },
+                { eng: "Friendship doesn't depend on gender. They can be friends just fine.", kor: "우정은 성별이랑 상관 없어 남녀 사이 친구 당연히 될 수 있지." },
+                { eng: "As long as both are mature enough to respect each other's boundaries.", kor: "둘 다 서로의 영역을 존중할 줄 아는 성숙한 사람이라면 말이야." },
+                { eng: "I mean, the heck, I have many guy friends myself.", kor: "아니 뭐 나부터도 일단 남사친 많은데!" },
+                { eng: "They are my good 'human network'.", kor: "다 나한테 좋은 인적 네트워크가 되잖아!" },
+                { eng: "And not everything is shared with all of your friends, if you think of it. There are different types of friendships.", kor: "그리고 솔직히 생각해보면 동성친구랑도 모든걸 다 공유하지 않아. 그냥 우정도 다 다르게 생긴거지." },
             ],
             50: [
                 { eng: "I love online shopping because it's so easy and convenient!", kor: "나는 온라인 쇼핑이 좋아 너무 쉽고 편하잖아~" },
@@ -239,16 +238,16 @@
                 { eng: "And the best part is I can get it on the spot without waiting for several days.", kor: "가장 좋은 점은 며칠 기다릴 필요 없이 그 자리에서 바로 가져올 수 있다는 거야!" },
             ],
             51: [
-            { eng: "I prefer wednesdays off cuz I feel like the week just flies by so quickly.", kor: "나는 수공강이 더 좋아 왜냐면 한 주가 엄청 빨리 지나가는 기분이거든." },
-            { eng: "It's also like we have two weekends because we get to relax in the middle of the week.", kor: "또 일주일 중간에 쉬게 되니까 약간 주말이 두 번 있는 느낌이야" },
-            { eng: "If I work hard for just two days, I can take a break and this goes on throughout the semester.", kor: "이틀 동안 열심히 일하면 한 번 쉴 수 있고 이게 한 학기 동안 반복되니까 ㅎㅎ" },
-            { eng: "Also, it's less crowded on Wednesdays than on Fridays so I can relax better.", kor: "그리고 수요일이 금요일보다 사람이 덜 붐비니까 더 여유롭게 쉴 수 있어." },
-            { eng: "What's more, during exam season, it's nice to be able to take a bit of a breather.", kor: "또 시험 기간에 약간의 숨통을 돌릴 수 있다는 게 얼마나 좋은지 몰라." },
-            { eng: "Friday is the best day to unwind and let go of any stress from the week.", kor: "금요일이 한 주 동안 받은 스트레스를 풀고 쉬기에 가장 좋은 날이야." },
-            { eng: "First, the weekends feel longer so I can easily go on trips.", kor: "우선 주말이 더 길게 느껴지니까 여행을 쉽게 갈 수 있지." },
-            { eng: "Working for four days can be tough. But having three days off in a row is just so worth it.", kor: "4일동안 일하는 게 힘들 순 있지만, 3일 연속으로 쉬니까 가치가 있지." },
-            { eng: "I start to feel happy from Thursday mornings knowing that I just need to get through one more day.", kor: "이제 하루만 더 지나면 된다는 생각 때문에 목요일 아침부터 행복하기 시작해." },
-            { eng: "And it's a perfect day to hang out since many of my friends also have Fridays off.", kor: "그리고 내 친구들도 거의 다 금공강이라 같이 놀기에도 가장 좋은 날이야." },
+                { eng: "I prefer wednesdays off cuz I feel like the week just flies by so quickly.", kor: "나는 수공강이 더 좋아 왜냐면 한 주가 엄청 빨리 지나가는 기분이거든." },
+                { eng: "It's also like we have two weekends because we get to relax in the middle of the week.", kor: "또 일주일 중간에 쉬게 되니까 약간 주말이 두 번 있는 느낌이야" },
+                { eng: "If I work hard for just two days, I can take a break and this goes on throughout the semester.", kor: "이틀 동안 열심히 일하면 한 번 쉴 수 있고 이게 한 학기 동안 반복되니까 ㅎㅎ" },
+                { eng: "Also, it's less crowded on Wednesdays than on Fridays so I can relax better.", kor: "그리고 수요일이 금요일보다 사람이 덜 붐비니까 더 여유롭게 쉴 수 있어." },
+                { eng: "What's more, during exam season, it's nice to be able to take a bit of a breather.", kor: "또 시험 기간에 약간의 숨통을 돌릴 수 있다는 게 얼마나 좋은지 몰라." },
+                { eng: "Friday is the best day to unwind and let go of any stress from the week.", kor: "금요일이 한 주 동안 받은 스트레스를 풀고 쉬기에 가장 좋은 날이야." },
+                { eng: "First, the weekends feel longer so I can easily go on trips.", kor: "우선 주말이 더 길게 느껴지니까 여행을 쉽게 갈 수 있지." },
+                { eng: "Working for four days can be tough. But having three days off in a row is just so worth it.", kor: "4일동안 일하는 게 힘들 순 있지만, 3일 연속으로 쉬니까 가치가 있지." },
+                { eng: "I start to feel happy from Thursday mornings knowing that I just need to get through one more day.", kor: "이제 하루만 더 지나면 된다는 생각 때문에 목요일 아침부터 행복하기 시작해." },
+                { eng: "And it's a perfect day to hang out since many of my friends also have Fridays off.", kor: "그리고 내 친구들도 거의 다 금공강이라 같이 놀기에도 가장 좋은 날이야." },
             ],
             52: [
                 { eng: "I think we don't need to study English as hard as before.", kor: "나는 예전처럼 열심히 영어 공부 할 필요 없다고 생각해." },
@@ -275,16 +274,16 @@
                 { eng: "Sometimes I study with my friends and that helps me do better on exams.", kor: "가끔은 내 친구들이랑 공부 같이하는데 그게 시험을 더 잘 보도록 해주는 것 같아." },
             ],
             54: [
-            { eng: "I prefer working from home cuz then I don't have to commute in rush hour.", kor: "나는 재택 근무가 더 좋은데 그렇게 하면 사람 많은 시간대에 출퇴근 안해도 되잖아!" },
-            { eng: "It's a lot less stressful to avoid a packed bus or subway.", kor: "사람으로 꽉 찬 버스나 지하철만 피해도 훨씬 덜 스트레스 받는 것 같아." },
-            { eng: "Since I'm not in the office, I don't have to deal with my boss constantly checking up on me.", kor: "사무실에 없으니까 내 상사가 계속 나 확인 하는 거에 스트레스 받지 않아도 되고!" },
-            { eng: "And I like that I can wear whatever I want in my place!", kor: "그리고 내 집에서 내가 원하는 거 아무거나 입을 수 있다는 것도 좋아!" },
-            { eng: "The best part, though? I get to spend a lot more time with my dog.", kor: "그래도 제일 좋은 점은 우리 강아지랑 시간을 더 많이 보낼 수 있게 된다는 거야!" },
-            { eng: "Personally, I'd rather go into the office to work.", kor: "개인적으로 나는 일하러 사무실 갈 것 같아." },
-            { eng: "When you work from home, it's hard to separate your work life from your personal life cuz you're always in the same place.", kor: "집에서 일하면 맨날 같은 공간에 있으니까 일과 사생활을 분리하기 어려워지잖아." },
-            { eng: "But when I leave the office, I'm done for the day and I can fully relax.", kor: "근데 회사를 나가면 그 날 업무는 끝인거고 푹 쉴 수 있게 되지." },
-            { eng: "I do feel more productive when I'm at the office.", kor: "그리고 사무실에 있을 때 더 생산적인 것 같이 느껴." },
-            { eng: "Plus, it's easier to communicate with colleagues and boss in person than through zoom.", kor: "게다가 동료들이랑 상사랑 소통할 때도 줌으로 하는 것보다 직접하는 게 훨씬 쉽고." }
+                { eng: "I prefer working from home cuz then I don't have to commute in rush hour.", kor: "나는 재택 근무가 더 좋은데 그렇게 하면 사람 많은 시간대에 출퇴근 안해도 되잖아!" },
+                { eng: "It's a lot less stressful to avoid a packed bus or subway.", kor: "사람으로 꽉 찬 버스나 지하철만 피해도 훨씬 덜 스트레스 받는 것 같아." },
+                { eng: "Since I'm not in the office, I don't have to deal with my boss constantly checking up on me.", kor: "사무실에 없으니까 내 상사가 계속 나 확인 하는 거에 스트레스 받지 않아도 되고!" },
+                { eng: "And I like that I can wear whatever I want in my place!", kor: "그리고 내 집에서 내가 원하는 거 아무거나 입을 수 있다는 것도 좋아!" },
+                { eng: "The best part, though? I get to spend a lot more time with my dog.", kor: "그래도 제일 좋은 점은 우리 강아지랑 시간을 더 많이 보낼 수 있게 된다는 거야!" },
+                { eng: "Personally, I'd rather go into the office to work.", kor: "개인적으로 나는 일하러 사무실 갈 것 같아." },
+                { eng: "When you work from home, it's hard to separate your work life from your personal life cuz you're always in the same place.", kor: "집에서 일하면 맨날 같은 공간에 있으니까 일과 사생활을 분리하기 어려워지잖아." },
+                { eng: "But when I leave the office, I'm done for the day and I can fully relax.", kor: "근데 회사를 나가면 그 날 업무는 끝인거고 푹 쉴 수 있게 되지." },
+                { eng: "I do feel more productive when I'm at the office.", kor: "그리고 사무실에 있을 때 더 생산적인 것 같이 느껴." },
+                { eng: "Plus, it's easier to communicate with colleagues and boss in person than through zoom.", kor: "게다가 동료들이랑 상사랑 소통할 때도 줌으로 하는 것보다 직접하는 게 훨씬 쉽고." }
             ],
             55: [
                 { eng: "I'm not really into taking big risks with money.", kor: "나는 내 돈 걸고 큰 위험을 감수하는 걸 좋아하지 않아." },
@@ -363,16 +362,13 @@
         const getEmptySentences = () => Array.from({ length: 10 }, () => ({ eng: "", kor: "" }));
 
         const StudyApp = () => {
+            // --- States ---
             const [user, setUser] = useState(null);
-            
-            // 💡 수정된 부분: localStorage에서 저장된 아이디 불러오기
             const [syncId, setSyncId] = useState(() => localStorage.getItem('savedSyncId') || "");
             
-            // --- Editing States for Inspo Notes ---
             const [editingNoteId, setEditingNoteId] = useState(null);
             const [editEng, setEditEng] = useState("");
             const [editKor, setEditKor] = useState("");
-
             const [showSyncModal, setShowSyncModal] = useState(false);
 
             const [currentDay, setCurrentDay] = useState(() => {
@@ -384,20 +380,16 @@
             
             const [sentences, setSentences] = useState(getEmptySentences());
             const [notes, setNotes] = useState([]);
-            // completedDates 구조 변경: [{ date: '2024-01-01', type: '60' }, ...]
             const [completedDates, setCompletedDates] = useState([]);
             
             const [activeTab, setActiveTab] = useState('challenge'); 
             const [viewDate, setViewDate] = useState(new Date());
 
-            // --- Timer States (Updated) ---
+            // Timer States
             const [timeLeft, setTimeLeft] = useState(3600);
             const [isActive, setIsActive] = useState(false);
-            // timerMode 제거
-            const [timerEndTime, setTimerEndTime] = useState(null); // 목표 종료 시간 (타임스탬프)
-            // 오늘 날짜를 기억하여 리셋 여부 확인
-            const [lastTimerDate, setLastTimerDate] = useState(null);
-
+            const [timerEndTime, setTimerEndTime] = useState(null); 
+            
             const [showCelebration, setShowCelebration] = useState(false);
             const [hideEnglish, setHideEnglish] = useState(false);
             const [revealedIndices, setRevealedIndices] = useState([]);
@@ -405,12 +397,12 @@
             const [newNoteKor, setNewNoteKor] = useState("");
 
             const [repetitionCount, setRepetitionCount] = useState(0);
-            const [silverAwarded, setSilverAwarded] = useState(false); // 은색 도장 획득 여부 로컬 상태
+            const [silverAwarded, setSilverAwarded] = useState(false); 
 
-            // --- Pagination States ---
             const [notesPage, setNotesPage] = useState(1);
             const NOTES_PER_PAGE = 10;
 
+            // --- Init Auth ---
             useEffect(() => {
                 const initAuth = async () => {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -468,7 +460,7 @@
                 return () => unsubscribe();
             }, [user, currentDay, syncId]);
 
-            // --- Firestore Sync (Global Data: Timer, Dates, Notes) ---
+            // --- Firestore Sync (Global Data) ---
             useEffect(() => {
                 if (!user) return;
                 const targetUserId = syncId || user.uid;
@@ -485,32 +477,44 @@
                         }
                         setCompletedDates(loadedDates);
 
-                        // 날짜 리셋 로직
                         const today = new Date().toISOString().split('T')[0];
-                        if (data.lastTimerDate !== today) {
-                             // 날짜가 바뀌었으면 리셋
+                        
+                        // 날짜가 바뀌었으면 리셋 (안전장치 포함)
+                        if (data.lastTimerDate && data.lastTimerDate !== today) {
                              setTimeLeft(3600);
                              setTimerEndTime(null);
                              setIsActive(false);
                              setSilverAwarded(false);
-                             // 서버에도 업데이트 (단, 바로 저장하면 무한루프 가능성 있으므로 로컬 상태만 변경하고 사용자 액션 시 저장되도록 하거나, 여기서 저장)
-                             // 여기서는 로컬 상태만 업데이트하고, 사용자가 타이머를 시작/조작할 때 저장되도록 함.
-                             // 하지만 날짜 필드를 업데이트 해줘야 다음 로드 때 또 리셋 안됨.
-                             if (data.lastTimerDate) { // 처음 로드가 아니고 날짜가 바뀐 경우에만 저장
-                                 saveGlobalData({ lastTimerDate: today, timeLeft: 3600, timerEndTime: null, silverAwarded: false });
-                             }
+                             // 서버에 즉시 업데이트하여 무한루프/오류 방지
+                             setDoc(globalDocRef, { 
+                                 lastTimerDate: today, 
+                                 savedTimeLeft: 3600, 
+                                 timerEndTime: null, 
+                                 silverAwarded: false 
+                             }, { merge: true });
                         } else {
-                            // 같은 날짜면 로드
-                            if (data.timerEndTime) {
-                                setTimerEndTime(data.timerEndTime);
-                                setIsActive(true);
-                            } else {
-                                setTimerEndTime(null);
-                                setIsActive(false);
-                                if (data.savedTimeLeft !== undefined) setTimeLeft(data.savedTimeLeft);
-                            }
-                            if (data.silverAwarded !== undefined) setSilverAwarded(data.silverAwarded);
+                             // 같은 날짜면 상태 복구
+                             if (data.timerEndTime) {
+                                 setTimerEndTime(data.timerEndTime);
+                                 setIsActive(true);
+                             } else {
+                                 setTimerEndTime(null);
+                                 setIsActive(false);
+                                 if (data.savedTimeLeft !== undefined) setTimeLeft(data.savedTimeLeft);
+                             }
+                             if (data.silverAwarded !== undefined) setSilverAwarded(data.silverAwarded);
                         }
+                    } else {
+                        // 최초 생성
+                        const today = new Date().toISOString().split('T')[0];
+                        setDoc(globalDocRef, { 
+                            lastTimerDate: today, 
+                            savedTimeLeft: 3600,
+                            timerEndTime: null,
+                            silverAwarded: false,
+                            completedDates: [],
+                            notes: []
+                        }, { merge: true });
                     }
                 }, (error) => {
                      if (error.code === 'permission-denied' && syncId && user && syncId !== user.uid) {
@@ -534,12 +538,51 @@
                 if (!user) return;
                 const targetUserId = syncId || user.uid;
                 const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
-                // 현재 날짜도 함께 저장
                 const today = new Date().toISOString().split('T')[0];
                 await setDoc(globalDocRef, { ...updates, lastTimerDate: today }, { merge: true });
             };
 
-            // --- Timer Logic (Background Supported) ---
+            // --- Goal Achieved Trigger ---
+            const triggerGoalAchieved = async (type) => {
+                if (!user) return;
+                const targetUserId = syncId || user.uid;
+                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+                
+                try {
+                    // 서버에서 최신 상태를 불러와서 업데이트 (과거 코드 충돌 방지)
+                    const docSnap = await getDoc(globalDocRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        let loadedDates = data.completedDates || [];
+                        if (loadedDates.length > 0 && typeof loadedDates[0] === 'string') {
+                            loadedDates = loadedDates.map(d => ({ date: d, type: '60' }));
+                        }
+                        
+                        const d = new Date();
+                        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        
+                        const existingIndex = loadedDates.findIndex(r => r.date === today);
+                        if (existingIndex !== -1) {
+                            if (type === '60') {
+                                loadedDates[existingIndex] = { date: today, type: '60' };
+                            }
+                        } else {
+                            loadedDates.push({ date: today, type: type });
+                        }
+                        
+                        await setDoc(globalDocRef, { completedDates: loadedDates }, { merge: true });
+                        
+                        if (type === '60') {
+                            setShowCelebration(true);
+                            setTimeout(() => setShowCelebration(false), 5000);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error updating goal:", error);
+                }
+            };
+
+            // --- Background Timer Logic (ONLY ONE USE-EFFECT FOR TIMER) ---
             useEffect(() => {
                 let interval = null;
 
@@ -547,22 +590,26 @@
                     interval = setInterval(() => {
                         const now = Date.now();
                         const diff = Math.ceil((timerEndTime - now) / 1000);
-                        const timeElapsed = 3600 - diff; // 60분(3600초) 기준 경과 시간
 
-                        // 30분(1800초) 경과 체크 (1800초 남음)
-                        // diff가 1800이 되는 순간 또는 그 이하로 처음 떨어졌을 때
-                        if (diff <= 1800 && !silverAwarded) {
-                            handleGoalAchieved('30');
+                        // 30분 경과 체크 (1800초 이하로 떨어졌을 때 1번만 실행)
+                        if (diff <= 1800 && diff > 0 && !silverAwarded) {
                             setSilverAwarded(true);
-                            saveGlobalData({ silverAwarded: true });
+                            triggerGoalAchieved('30');
                         }
 
+                        // 60분 경과 체크
                         if (diff <= 0) {
                             setTimeLeft(0);
                             setIsActive(false);
                             setTimerEndTime(null);
-                            handleGoalAchieved('60');
-                            saveGlobalData({ timerEndTime: null, savedTimeLeft: 0, silverAwarded: true }); 
+                            setSilverAwarded(true);
+                            triggerGoalAchieved('60');
+                            
+                            if (user) {
+                                const targetUserId = syncId || user.uid;
+                                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+                                setDoc(globalDocRef, { timerEndTime: null, savedTimeLeft: 0, silverAwarded: true }, { merge: true });
+                            }
                         } else {
                             setTimeLeft(diff);
                         }
@@ -570,63 +617,51 @@
                 }
 
                 return () => clearInterval(interval);
-            }, [isActive, timerEndTime, silverAwarded]);
+            }, [isActive, timerEndTime, silverAwarded, user, syncId]);
 
+            // --- Timer Controllers ---
             const handleStartTimer = () => {
+                if (!user) return;
+                const targetUserId = syncId || user.uid;
+                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+
                 if (isActive) {
-                    // 일시 정지 (Pause)
+                    // Pause
                     setIsActive(false);
                     setTimerEndTime(null);
-                    saveGlobalData({ timerEndTime: null, savedTimeLeft: timeLeft }); 
+                    setDoc(globalDocRef, { timerEndTime: null, savedTimeLeft: timeLeft }, { merge: true }); 
                 } else {
-                    // 시작 (Start)
+                    // Start or Resume
                     const duration = timeLeft > 0 ? timeLeft : 3600; 
-                    const newEndTime = Date.now() + duration * 1000;
+                    const isNewStart = duration === 3600;
                     
+                    if (isNewStart) setSilverAwarded(false);
+
+                    const newEndTime = Date.now() + duration * 1000;
                     setTimerEndTime(newEndTime);
                     setIsActive(true);
-                    saveGlobalData({ timerEndTime: newEndTime, savedTimeLeft: duration });
+                    
+                    const updates = { timerEndTime: newEndTime, savedTimeLeft: duration };
+                    if (isNewStart) updates.silverAwarded = false;
+                    
+                    setDoc(globalDocRef, updates, { merge: true });
                 }
             };
 
             const handleResetTimer = () => {
+                if (!user) return;
+                const targetUserId = syncId || user.uid;
+                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+
                 setIsActive(false);
                 setTimerEndTime(null);
                 setTimeLeft(3600);
                 setSilverAwarded(false);
-                saveGlobalData({ timerEndTime: null, savedTimeLeft: 3600, silverAwarded: false });
+                setDoc(globalDocRef, { timerEndTime: null, savedTimeLeft: 3600, silverAwarded: false }, { merge: true });
             };
 
-            const handleGoalAchieved = (type) => {
-                const d = new Date();
-                const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                
-                // 기존 기록 확인
-                const existingRecordIndex = completedDates.findIndex(d => d.date === today);
-                
-                let newDates = [...completedDates];
-                if (existingRecordIndex !== -1) {
-                    // 이미 오늘 기록이 있음
-                    if (type === '60') {
-                        // 60분 달성 시 30분 기록을 덮어씀 (업그레이드)
-                         newDates[existingRecordIndex] = { date: today, type: '60' };
-                    } 
-                    // type이 30이면 이미 기록이 있으므로(30이든 60이든) 무시
-                } else {
-                    // 오늘 기록 없음 -> 추가
-                    newDates.push({ date: today, type: type });
-                }
-                
-                setCompletedDates(newDates);
-                saveGlobalData({ completedDates: newDates, timerEndTime: isActive ? timerEndTime : null }); // timerEndTime 유지 여부 주의
-                
-                if (type === '60') {
-                    setShowCelebration(true);
-                    setTimeout(() => setShowCelebration(false), 5000);
-                }
-            };
 
-            // ... (Rest of logic: updateSentence, toggleHighlight, toggleRepetition, speakText, addNote, deleteNote, editing...) ...
+            // --- Handlers for Inputs ---
              const updateSentence = (index, field, value) => {
                 const newSentences = [...sentences];
                 newSentences[index] = { ...newSentences[index], [field]: value };
@@ -776,13 +811,15 @@
 
             return (
                 <div className="min-h-screen bg-[#F3F4F6] text-slate-800 font-sans p-4 md:p-8 selection:bg-[#B692F6] selection:text-white">
-                    {/* ... (Sync Modal & Celebration Overlay same) ... */}
                      {showSyncModal && (
                         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm p-4">
                             <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-md w-full animate-bounce-up">
                                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-[#7C3AED]">
                                     <User size={24}/> 동기화 설정 (Sync)
                                 </h3>
+                                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                                    여러 기기에서 기록을 공유하려면, 아래 <strong>내 ID</strong>를 복사해서 다른 기기에 입력하세요.
+                                </p>
                                 <div className="bg-slate-100 p-3 rounded-xl mb-4 flex items-center justify-between">
                                     <code className="text-xs md:text-sm font-mono text-slate-600 break-all">{user?.uid}</code>
                                     <button onClick={() => navigator.clipboard.writeText(user?.uid)} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-500">
@@ -817,10 +854,8 @@
                     )}
 
                     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        {/* Header */}
                          <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                             <div className="flex items-center gap-4">
-                                {/* Day Navigator */}
                                 <div className="flex items-center bg-white rounded-2xl shadow-sm p-1 border border-slate-200">
                                     <button onClick={() => changeDay('prev')} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-[#7C3AED] transition-colors">
                                         <ChevronLeft size={24} />
@@ -865,7 +900,7 @@
                         {/* LEFT COLUMN */}
                         <div className="lg:col-span-4 space-y-6">
                             
-                            {/* Timer (Updated to Single 60min Mode with milestones) */}
+                            {/* Timer */}
                             <div className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/60 border border-slate-100 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-slate-100">
                                     <div 
@@ -919,11 +954,9 @@
                                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
                                         <div key={d} className="text-[10px] font-bold text-[#7C3AED] uppercase mb-1">{d}</div>
                                     ))}
-                                    {/* Empty Slots */}
                                     {Array.from({ length: getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => (
                                         <div key={`empty-${i}`} />
                                     ))}
-                                    {/* Days */}
                                     {Array.from({ length: getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => {
                                         const day = i + 1;
                                         const dateStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -969,9 +1002,8 @@
                             </div>
                         </div>
 
-                        {/* RIGHT COLUMN (Content) */}
+                        {/* RIGHT COLUMN */}
                         <div className="lg:col-span-8">
-                           {/* ... (Right column contents - Tabs, Challenge, Notes) ... */}
                             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/50 min-h-full">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                     <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
@@ -1111,7 +1143,7 @@
                                     </>
                                 ) : (
                                     <>
-                                        {/* Inspo Notes (Same as before) */}
+                                        {/* Inspo Notes */}
                                          <div className="mb-8 p-6 bg-[#FFF1F2] rounded-2xl border border-[#FFE4E6]">
                                             <div className="flex justify-between items-center mb-4">
                                                 <h3 className="font-bold text-[#BE123C] flex items-center gap-2">
@@ -1202,7 +1234,6 @@
                                                             </div>
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-1">
-                                                                {/* English Part */}
                                                                 {editingNoteId === note.id ? (
                                                                      <div className="bg-slate-50 border border-purple-200 rounded-lg p-3 min-h-[80px] flex items-center">
                                                                         <textarea 
@@ -1230,7 +1261,6 @@
                                                                     </div>
                                                                 )}
 
-                                                                {/* Korean Part */}
                                                                 {editingNoteId === note.id ? (
                                                                     <div className="bg-slate-50 border border-purple-200 rounded-lg p-3 min-h-[80px] flex items-center">
                                                                         <textarea 
