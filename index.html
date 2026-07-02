@@ -27,14 +27,6 @@
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-        .recording-pulse {
-            animation: pulse-ring 2s infinite;
-        }
     </style>
 </head>
 <body>
@@ -42,9 +34,9 @@
 
     <!-- 4. 메인 React 코드 -->
     <script type="text/babel" data-type="module" data-presets="react">
-        import React, { useState, useEffect, useCallback, useRef } from 'react';
+        import React, { useState, useEffect, useCallback } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Highlighter, StickyNote, Database, Volume2, X, Clock, Camera, Mic, MessageSquare } from 'lucide-react';
+        import { Play, Pause, RotateCcw, Plus, Trash2, Edit2, Eye, EyeOff, Trophy, Sparkles, BookOpen, Calendar as CalendarIcon, Save, RefreshCw, ChevronLeft, ChevronRight, User, Copy, Check, Highlighter, StickyNote, Volume2, X, Clock } from 'lucide-react';
         import { initializeApp } from 'firebase/app';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, getDocs, writeBatch } from 'firebase/firestore';
@@ -443,70 +435,6 @@
             ]
         };
 
-        // --- 🌟 실전 IELTS Practice Scenes Data (모범 답안 포함) ---
-        const ieltsScenes = [
-            { 
-                id: 1, 
-                url: "https://images.unsplash.com/photo-1517736996303-4e64a4f873bc?w=800&q=80", 
-                title: "Describe a crowded place you visited.",
-                modelAnswer: "I'd like to talk about a bustling cafe I recently visited in the heart of the city. It was incredibly packed with people from all walks of life. Some were deeply engrossed in their laptops, likely working or studying, while others were engaged in animated conversations. The aroma of freshly roasted coffee beans filled the air, and I could hear the constant hum of chatter mixed with the clinking of coffee cups. Despite the crowd, the vibrant atmosphere made it a perfect spot to observe city life."
-            },
-            { 
-                id: 2, 
-                url: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&q=80", 
-                title: "Describe a busy public transport station.",
-                modelAnswer: "The picture shows a highly congested train station during what looks like rush hour. There is a massive sea of commuters waiting on the platform, trying to get to their destinations. The lighting is quite dramatic, creating a slightly tense or overwhelming mood. You can imagine the loud announcements over the PA system and the rushing footsteps of passengers. It truly captures the hectic nature of daily commuting in a metropolis."
-            },
-            { 
-                id: 3, 
-                url: "https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=800&q=80", 
-                title: "Describe a beautiful natural scenery.",
-                modelAnswer: "This breathtaking scenery features a peaceful natural landscape, highlighted by a stunningly clear turquoise lake reflecting the surrounding majestic mountains. The lush greenery and towering trees create a sense of absolute tranquility. It looks like a perfect getaway from the hustle and bustle of city life. The crisp, clean air and the sheer scale of the mountains make it a truly awe-inspiring destination for any nature lover."
-            },
-            { 
-                id: 4, 
-                url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80", 
-                title: "Describe a time you studied with others.",
-                modelAnswer: "In this image, a group of young students is gathered around a table, actively collaborating on a project. They appear to be in a modern library or a bright study lounge. Everyone is focused, sharing ideas, and looking at a laptop screen together, which suggests a highly interactive and productive study session. Their casual attire and relaxed yet engaged postures show that teamwork can be both enjoyable and effective."
-            },
-            { 
-                id: 5, 
-                url: "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80", 
-                title: "Describe a meal you had with friends.",
-                modelAnswer: "This scene depicts a warm and joyful dinner gathering among friends. They are seated around a rustic wooden table filled with various appetizing dishes and drinks. The cozy, dim lighting gives the place an intimate and welcoming vibe. You can see them laughing and enjoying each other's company, illustrating how sharing a meal is a fantastic way to bond and create lasting memories with loved ones."
-            },
-            { 
-                id: 6, 
-                url: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&q=80", 
-                title: "Describe a time when you were very busy.",
-                modelAnswer: "Here we see a rather cluttered desk that clearly belongs to someone who is swamped with work. There are scattered papers, a laptop, and a cup of coffee, indicating a long, demanding work or study session. The messy environment perfectly captures the feeling of being overwhelmed and trying to meet a tight deadline. It reminds me of the stressful yet focused periods we all face during exams or major projects."
-            },
-            { 
-                id: 7, 
-                url: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80", 
-                title: "Describe a memorable journey you took.",
-                modelAnswer: "This image captures the essence of a classic road trip. Someone is sitting in the back of a van or a car with the doors wide open, overlooking a long, winding road that stretches toward the horizon. The vast, open landscape gives a profound sense of freedom and adventure. It makes me think of the excitement of leaving the daily routine behind and embarking on an unpredictable journey into nature."
-            },
-            { 
-                id: 8, 
-                url: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80", 
-                title: "Describe a city you enjoyed visiting at night.",
-                modelAnswer: "This is a spectacular night view of a modern, vibrant city. The skyline is dominated by towering skyscrapers illuminated by countless lights, contrasting beautifully against the dark night sky. The glowing city streets and the overall energetic vibe suggest a place that never sleeps. It highlights the dynamic and fast-paced lifestyle of a major urban center, filled with endless opportunities and entertainment."
-            },
-            { 
-                id: 9, 
-                url: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=800&q=80", 
-                title: "Describe a formal meeting or event.",
-                modelAnswer: "The photo illustrates a professional business meeting taking place in a bright, modern corporate office. A diverse group of professionals is engaged in a serious discussion, analyzing documents and sharing insights over a conference table. The setting looks highly organized and collaborative, reflecting the importance of effective communication and teamwork in achieving corporate goals and making strategic decisions."
-            },
-            { 
-                id: 10, 
-                url: "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=800&q=80", 
-                title: "Describe a quiet place you like to go to.",
-                modelAnswer: "This breathtaking image showcases an incredibly serene and majestic natural landscape. The towering snow-capped mountains loom over a pristine, calm lake, reflecting the beauty of the surrounding wilderness. The sheer scale of nature here is awe-inspiring, and the absence of any human elements emphasizes the pure tranquility of the place. It looks like the perfect retreat to find peace of mind and escape from the noise of the modern world."
-            }
-        ];
-
         const getEmptySentences = () => Array.from({ length: 10 }, () => ({ eng: "", kor: "" }));
 
         const StudyApp = () => {
@@ -516,6 +444,7 @@
             const [editingNoteId, setEditingNoteId] = useState(null);
             const [editEng, setEditEng] = useState("");
             const [editKor, setEditKor] = useState("");
+            const [editTag, setEditTag] = useState("");
             const [showSyncModal, setShowSyncModal] = useState(false);
 
             const [currentDay, setCurrentDay] = useState(() => {
@@ -528,7 +457,6 @@
             const [sentences, setSentences] = useState(getEmptySentences());
             const [notes, setNotes] = useState([]);
             const [completedDates, setCompletedDates] = useState([]);
-            const [savedScenes, setSavedScenes] = useState([]); 
             
             const [topic, setTopic] = useState("");
             const [isEditingTopic, setIsEditingTopic] = useState(false);
@@ -550,14 +478,12 @@
             const [repetitionCount, setRepetitionCount] = useState(0);
             const [silverAwarded, setSilverAwarded] = useState(false); 
 
-            // --- 🎙️ IELTS STT & Model Answer States ---
-            const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
-            const [sceneDraft, setSceneDraft] = useState("");
-            const [ieltsTimeLeft, setIeltsTimeLeft] = useState(120); // 2 mins
-            const [isIeltsActive, setIsIeltsActive] = useState(false);
-            const [isRecording, setIsRecording] = useState(false);
-            const [showModelAnswer, setShowModelAnswer] = useState(false); // 모범답안 토글
-            const recognitionRef = useRef(null);
+            // --- 🔍 검색 State ---
+            const [searchQuery, setSearchQuery] = useState("");
+            const [selectedTag, setSelectedTag] = useState("");
+            const [newNoteTag, setNewNoteTag] = useState("");
+            const [showRandomReview, setShowRandomReview] = useState(false);
+            const [randomNotes, setRandomNotes] = useState([]);
 
             const [notesPage, setNotesPage] = useState(1);
             const NOTES_PER_PAGE = 10;
@@ -584,46 +510,6 @@
             useEffect(() => {
                 setRevealedIndices([]);
             }, [activeTab, currentDay, notesPage]); 
-
-            // --- 🎙️ 음성 인식 (Web Speech API) 초기화 ---
-            useEffect(() => {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (SpeechRecognition) {
-                    const recognition = new SpeechRecognition();
-                    recognition.continuous = true;
-                    recognition.interimResults = true;
-                    recognition.lang = 'en-US'; // 아이엘츠 영어 인식
-
-                    recognition.onresult = (event) => {
-                        let finalTrans = '';
-                        for (let i = event.resultIndex; i < event.results.length; ++i) {
-                            if (event.results[i].isFinal) {
-                                finalTrans += event.results[i][0].transcript;
-                            }
-                        }
-                        if (finalTrans) {
-                            // 기존 텍스트 뒤에 띄어쓰기 추가하며 이어붙이기
-                            setSceneDraft(prev => {
-                                const currentText = prev.trim();
-                                return currentText ? currentText + ' ' + finalTrans.trim() : finalTrans.trim();
-                            });
-                        }
-                    };
-
-                    recognition.onerror = (event) => {
-                        console.error("Speech recognition error", event.error);
-                        setIsRecording(false);
-                    };
-
-                    recognition.onend = () => {
-                        setIsRecording(false);
-                    };
-
-                    recognitionRef.current = recognition;
-                } else {
-                    console.warn("Speech recognition is not supported in this browser.");
-                }
-            }, []);
 
             // --- Day Data 읽기 ---
             useEffect(() => {
@@ -663,24 +549,39 @@
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         setNotes(data.notes || []);
-                        setSavedScenes(data.savedScenes || []); 
                         
                         let loadedDates = data.completedDates || [];
                         if (loadedDates.length > 0 && typeof loadedDates[0] === 'string') {
                             loadedDates = loadedDates.map(d => ({ date: d, type: '60' }));
                         }
-                        setCompletedDates(loadedDates);
+                        setCompletedDates(normalizeDates(loadedDates));
 
-                        const today = new Date().toISOString().split('T')[0];
+                        const today = getLocalToday();
                         if (data.lastTimerDate && data.lastTimerDate !== today) {
                              setTimeLeft(3600);
                              setTimerEndTime(null);
                              setIsActive(false);
                              setSilverAwarded(false);
+                             // 날짜가 바뀌었으므로 Firestore에도 리셋 상태를 저장
+                             setDoc(globalDocRef, { 
+                                 timerEndTime: null, 
+                                 savedTimeLeft: 3600, 
+                                 silverAwarded: false, 
+                                 lastTimerDate: today 
+                             }, { merge: true });
                         } else {
                              if (data.timerEndTime) {
-                                 setTimerEndTime(data.timerEndTime);
-                                 setIsActive(true);
+                                 // 타이머 endTime이 이미 과거인지 확인
+                                 const now = Date.now();
+                                 if (data.timerEndTime <= now) {
+                                     // 이미 시간이 다 지남 → 완료 처리
+                                     setTimeLeft(0);
+                                     setTimerEndTime(null);
+                                     setIsActive(false);
+                                 } else {
+                                     setTimerEndTime(data.timerEndTime);
+                                     setIsActive(true);
+                                 }
                              } else {
                                  setTimerEndTime(null);
                                  setIsActive(false);
@@ -691,7 +592,6 @@
                     } else {
                         setNotes([]);
                         setCompletedDates([]);
-                        setSavedScenes([]);
                         setTimeLeft(3600);
                         setIsActive(false);
                         setTimerEndTime(null);
@@ -716,7 +616,7 @@
                 if (!user) return;
                 const targetUserId = syncId || user.uid;
                 const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalToday();
                 await setDoc(globalDocRef, { ...updates, lastTimerDate: today }, { merge: true });
             };
 
@@ -730,14 +630,10 @@
                     let loadedDates = [];
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        loadedDates = data.completedDates || [];
-                        if (loadedDates.length > 0 && typeof loadedDates[0] === 'string') {
-                            loadedDates = loadedDates.map(d => ({ date: d, type: '60' }));
-                        }
+                        loadedDates = normalizeDates(data.completedDates || []);
                     }
                     
-                    const d = new Date();
-                    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    const today = getLocalToday();
                     
                     const existingIndex = loadedDates.findIndex(r => r.date === today);
                     if (existingIndex !== -1) {
@@ -789,34 +685,26 @@
                 return () => clearInterval(interval);
             }, [isActive, timerEndTime, silverAwarded, user, syncId]);
 
-            // --- IELTS Timer & STT Logic ---
+            // --- 🌟 [핵심 버그 수정 3] 자정 자동 리셋: 페이지가 열려있어도 날짜가 바뀌면 타이머 리셋 ---
             useEffect(() => {
-                let interval = null;
-                if (isIeltsActive && ieltsTimeLeft > 0) {
-                    interval = setInterval(() => {
-                        setIeltsTimeLeft(prev => prev - 1);
-                    }, 1000);
-                } else if (ieltsTimeLeft === 0) {
-                    setIsIeltsActive(false);
-                }
-                return () => clearInterval(interval);
-            }, [isIeltsActive, ieltsTimeLeft]);
+                if (!user) return;
+                const lastCheckedDate = { current: getLocalToday() };
+                
+                const midnightCheck = setInterval(() => {
+                    const now = getLocalToday();
+                    if (now !== lastCheckedDate.current) {
+                        // 날짜가 바뀜 → 타이머 리셋
+                        lastCheckedDate.current = now;
+                        setTimeLeft(3600);
+                        setTimerEndTime(null);
+                        setIsActive(false);
+                        setSilverAwarded(false);
+                        saveGlobalData({ timerEndTime: null, savedTimeLeft: 3600, silverAwarded: false });
+                    }
+                }, 30000); // 30초마다 날짜 변경 체크
 
-            const toggleIeltsTimer = () => setIsIeltsActive(!isIeltsActive);
-            const resetIeltsTimer = () => {
-                setIsIeltsActive(false);
-                setIeltsTimeLeft(120);
-            };
-
-            const toggleRecording = () => {
-                if (isRecording) {
-                    recognitionRef.current?.stop();
-                    setIsRecording(false);
-                } else {
-                    recognitionRef.current?.start();
-                    setIsRecording(true);
-                }
-            };
+                return () => clearInterval(midnightCheck);
+            }, [user, syncId]);
 
             const handleStartTimer = () => {
                 if (!user) return;
@@ -856,13 +744,26 @@
                 saveDayData(newSentences, repetitionCount);
             };
 
-            const toggleHighlight = (index, isNote = false, noteId = null) => {
+            const toggleHighlight = async (index, isNote = false, noteId = null) => {
                 if (isNote) {
-                    const newNotes = notes.map(n => 
-                        n.id === noteId ? { ...n, highlight: !n.highlight } : n
-                    );
-                    setNotes(newNotes);
-                    saveGlobalData({ notes: newNotes });
+                    if (!user) return;
+                    const targetUserId = syncId || user.uid;
+                    const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+                    
+                    try {
+                        const docSnap = await getDoc(globalDocRef);
+                        let latestNotes = [];
+                        if (docSnap.exists() && docSnap.data().notes) {
+                            latestNotes = docSnap.data().notes;
+                        }
+                        const newNotes = latestNotes.map(n => 
+                            n.id === noteId ? { ...n, highlight: !n.highlight } : n
+                        );
+                        await setDoc(globalDocRef, { notes: newNotes }, { merge: true });
+                        setNotes(newNotes);
+                    } catch (error) {
+                        console.error("Error toggling highlight:", error);
+                    }
                 } else {
                     const newSentences = [...sentences];
                     newSentences[index] = { 
@@ -890,71 +791,99 @@
                 window.speechSynthesis.speak(utterance);
             };
 
-            const addNote = () => {
-                if (newNoteEng.trim()) {
-                    const newNoteList = [{ 
+            const addNote = async () => {
+                if (!newNoteEng.trim() || !user) return;
+                const targetUserId = syncId || user.uid;
+                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+                
+                try {
+                    // 🌟 [핵심 버그 수정 4] Firestore에서 최신 데이터를 먼저 읽고 추가 (데이터 유실 방지)
+                    const docSnap = await getDoc(globalDocRef);
+                    let latestNotes = [];
+                    if (docSnap.exists() && docSnap.data().notes) {
+                        latestNotes = docSnap.data().notes;
+                    }
+                    
+                    const newNote = { 
                         id: Date.now(), 
                         eng: newNoteEng, 
                         kor: newNoteKor,
+                        tag: newNoteTag.trim() || "",
                         date: new Date().toLocaleDateString(),
                         highlight: false
-                    }, ...notes];
+                    };
+                    
+                    const newNoteList = [newNote, ...latestNotes];
+                    await setDoc(globalDocRef, { notes: newNoteList }, { merge: true });
+                    
+                    // 로컬 state도 업데이트 (onSnapshot이 다시 가져올 때까지의 즉시 반영)
                     setNotes(newNoteList);
-                    saveGlobalData({ notes: newNoteList });
                     setNewNoteEng("");
                     setNewNoteKor("");
-                    setNotesPage(1); 
+                    setNewNoteTag("");
+                    setNotesPage(1);
+                } catch (error) {
+                    console.error("Error adding note:", error);
+                    alert("노트 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
                 }
             };
 
-            const deleteNote = (id) => {
-                const newNoteList = notes.filter(n => n.id !== id);
-                setNotes(newNoteList);
-                saveGlobalData({ notes: newNoteList });
-            };
-
-            const saveIeltsPractice = () => {
-                if (sceneDraft.trim()) {
-                    const currentScene = ieltsScenes[currentSceneIndex];
-                    const newList = [{
-                        id: Date.now(),
-                        imageUrl: currentScene.url,
-                        title: currentScene.title,
-                        script: sceneDraft,
-                        date: new Date().toLocaleDateString()
-                    }, ...savedScenes];
-                    setSavedScenes(newList);
-                    saveGlobalData({ savedScenes: newList });
-                    setSceneDraft("");
-                    alert("스크립트가 성공적으로 저장되었습니다!");
+            const deleteNote = async (id) => {
+                if (!user) return;
+                const targetUserId = syncId || user.uid;
+                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+                
+                try {
+                    const docSnap = await getDoc(globalDocRef);
+                    let latestNotes = [];
+                    if (docSnap.exists() && docSnap.data().notes) {
+                        latestNotes = docSnap.data().notes;
+                    }
+                    const newNoteList = latestNotes.filter(n => n.id !== id);
+                    await setDoc(globalDocRef, { notes: newNoteList }, { merge: true });
+                    setNotes(newNoteList);
+                } catch (error) {
+                    console.error("Error deleting note:", error);
+                    alert("노트 삭제 중 오류가 발생했습니다. 다시 시도해주세요.");
                 }
-            };
-
-            const deleteIeltsPractice = (id) => {
-                const newList = savedScenes.filter(s => s.id !== id);
-                setSavedScenes(newList);
-                saveGlobalData({ savedScenes: newList });
             };
 
             const startEditing = (note) => {
                 setEditingNoteId(note.id);
                 setEditEng(note.eng);
                 setEditKor(note.kor);
+                setEditTag(note.tag || "");
             };
 
             const cancelEdit = () => {
                 setEditingNoteId(null);
                 setEditEng("");
                 setEditKor("");
+                setEditTag("");
             };
 
-            const saveEdit = () => {
-                const updatedNotes = notes.map(n => 
-                    n.id === editingNoteId ? { ...n, eng: editEng, kor: editKor } : n
-                );
-                setNotes(updatedNotes);
-                saveGlobalData({ notes: updatedNotes });
-                setEditingNoteId(null);
+            const saveEdit = async () => {
+                if (!user) return;
+                const targetUserId = syncId || user.uid;
+                const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
+                
+                try {
+                    const docSnap = await getDoc(globalDocRef);
+                    let latestNotes = [];
+                    if (docSnap.exists() && docSnap.data().notes) {
+                        latestNotes = docSnap.data().notes;
+                    }
+                    const updatedNotes = latestNotes.map(n => 
+                        n.id === editingNoteId ? { ...n, eng: editEng, kor: editKor, tag: editTag.trim() } : n
+                    );
+                    await setDoc(globalDocRef, { notes: updatedNotes }, { merge: true });
+                    setNotes(updatedNotes);
+                    setEditingNoteId(null);
+                    setEditTag("");
+                } catch (error) {
+                    console.error("Error saving edit:", error);
+                    alert("수정 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
             };
             
             const loadSampleData = () => {
@@ -976,16 +905,6 @@
                     setCurrentDay(newDay);
                     localStorage.setItem('lastVisitedDay', newDay); 
                 }
-            };
-
-            const nextScene = () => {
-                setCurrentSceneIndex(prev => (prev + 1) % ieltsScenes.length);
-                setShowModelAnswer(false); // 사진 바꿀 때 모범답안 닫기
-            };
-            
-            const prevScene = () => {
-                setCurrentSceneIndex(prev => prev === 0 ? ieltsScenes.length - 1 : prev - 1);
-                setShowModelAnswer(false);
             };
 
             const handleDaySubmit = () => {
@@ -1014,19 +933,6 @@
                 setRevealedIndices(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]);
             };
 
-            const handleManualStampToggle = (dateStr) => {
-                if(!user) return;
-                const existingIndex = completedDates.findIndex(d => d.date === dateStr);
-                let newDates = [...completedDates];
-                if (existingIndex !== -1) {
-                    newDates.splice(existingIndex, 1);
-                } else {
-                    newDates.push({ date: dateStr, type: '60' });
-                }
-                setCompletedDates(newDates);
-                saveGlobalData({ completedDates: newDates });
-            };
-
             const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
             const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
             const changeMonth = (offset) => {
@@ -1035,11 +941,117 @@
                 setViewDate(newDate);
             };
 
+            // --- 🔍 검색 & 태그 필터 적용 ---
+            const allTags = [...new Set(notes.filter(n => n.tag).map(n => n.tag))];
+            
+            const filteredNotes = notes.filter(note => {
+                const matchesSearch = searchQuery.trim() 
+                    ? (note.eng && note.eng.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      (note.kor && note.kor.includes(searchQuery))
+                    : true;
+                const matchesTag = selectedTag ? note.tag === selectedTag : true;
+                return matchesSearch && matchesTag;
+            });
+
             const indexOfLastNote = notesPage * NOTES_PER_PAGE;
             const indexOfFirstNote = indexOfLastNote - NOTES_PER_PAGE;
-            const currentNotes = notes.slice(indexOfFirstNote, indexOfLastNote);
-            const totalPages = Math.ceil(notes.length / NOTES_PER_PAGE);
+            const currentNotes = filteredNotes.slice(indexOfFirstNote, indexOfLastNote);
+            const totalPages = Math.ceil(filteredNotes.length / NOTES_PER_PAGE);
             const paginate = (pageNumber) => setNotesPage(pageNumber);
+
+            // --- 🔥 Streak 계산 ---
+            const calculateStreak = () => {
+                if (!completedDates || completedDates.length === 0) return { current: 0, best: 0 };
+                
+                const sortedDates = [...completedDates]
+                    .map(d => d.date)
+                    .sort((a, b) => b.localeCompare(a)); // 최신순 정렬
+                
+                const unique = [...new Set(sortedDates)];
+                
+                // 현재 연속 streak 계산
+                let currentStreak = 0;
+                const today = getLocalToday();
+                const yesterday = (() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - 1);
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                })();
+                
+                // 오늘 또는 어제부터 시작
+                let startIdx = unique.indexOf(today);
+                if (startIdx === -1) startIdx = unique.indexOf(yesterday);
+                
+                if (startIdx !== -1) {
+                    for (let i = startIdx; i < unique.length; i++) {
+                        const expected = new Date();
+                        expected.setDate(expected.getDate() - (i - startIdx) - (unique[startIdx] === yesterday ? 1 : 0));
+                        const expectedStr = `${expected.getFullYear()}-${String(expected.getMonth() + 1).padStart(2, '0')}-${String(expected.getDate()).padStart(2, '0')}`;
+                        if (unique[i] === expectedStr) {
+                            currentStreak++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                
+                // 최장 streak 계산
+                let bestStreak = 0;
+                let tempStreak = 1;
+                const sortedAsc = [...unique].sort();
+                for (let i = 1; i < sortedAsc.length; i++) {
+                    const prev = new Date(sortedAsc[i - 1]);
+                    const curr = new Date(sortedAsc[i]);
+                    const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+                    if (diff === 1) {
+                        tempStreak++;
+                    } else {
+                        bestStreak = Math.max(bestStreak, tempStreak);
+                        tempStreak = 1;
+                    }
+                }
+                bestStreak = Math.max(bestStreak, tempStreak);
+                
+                return { current: currentStreak, best: bestStreak };
+            };
+            
+            const streak = calculateStreak();
+
+            // --- 🎲 랜덤 복습 ---
+            const generateRandomNotes = () => {
+                if (notes.length === 0) return;
+                const count = Math.min(5, notes.length);
+                const shuffled = [...notes].sort(() => Math.random() - 0.5);
+                setRandomNotes(shuffled.slice(0, count));
+                setShowRandomReview(true);
+            };
+
+            // --- 📥 내보내기 (CSV) ---
+            const exportNotesCSV = () => {
+                if (notes.length === 0) {
+                    alert("내보낼 노트가 없습니다.");
+                    return;
+                }
+                const BOM = '\uFEFF';
+                const header = 'English,Korean,Tag,Date\n';
+                const rows = notes.map(n => {
+                    const eng = `"${(n.eng || '').replace(/"/g, '""')}"`;
+                    const kor = `"${(n.kor || '').replace(/"/g, '""')}"`;
+                    const tag = `"${(n.tag || '').replace(/"/g, '""')}"`;
+                    const date = `"${(n.date || '').replace(/"/g, '""')}"`;
+                    return `${eng},${kor},${tag},${date}`;
+                }).join('\n');
+                
+                const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `inspo_notes_${getLocalToday()}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
 
             return (
                 <div className="min-h-screen bg-[#F3F4F6] text-slate-800 font-sans p-4 md:p-8 selection:bg-[#B692F6] selection:text-white">
@@ -1165,6 +1177,33 @@
                                 </div>
                             </div>
 
+                            {/* 🔥 Streak Counter */}
+                            <div className="bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+                                <div className="absolute top-[-10px] right-[-10px] w-24 h-24 bg-yellow-400 rounded-full blur-[50px] opacity-30 pointer-events-none"></div>
+                                <div className="flex items-center justify-between relative z-10">
+                                    <div>
+                                        <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-1">Current Streak</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-5xl font-black">{streak.current}</span>
+                                            <span className="text-lg font-bold text-white/80">일</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-6xl">{streak.current >= 7 ? '🔥' : streak.current >= 3 ? '✨' : '💪'}</div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center relative z-10">
+                                    <div className="flex items-center gap-2">
+                                        <Trophy size={14} className="text-yellow-300"/>
+                                        <span className="text-xs font-bold text-white/70">최장 기록</span>
+                                    </div>
+                                    <span className="text-sm font-black text-yellow-300">{streak.best}일</span>
+                                </div>
+                                {streak.current >= streak.best && streak.current > 0 && (
+                                    <div className="mt-2 text-center text-[10px] font-bold text-yellow-300 animate-pulse">
+                                        🏆 역대 최고 기록 달성 중!
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Monthly Streak Calendar */}
                             <div className="bg-[#111827] text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
                                 <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-[#7C3AED] rounded-full blur-[60px] opacity-40 pointer-events-none"></div>
@@ -1221,9 +1260,7 @@
                                         return (
                                             <div 
                                                 key={day} 
-                                                className="flex flex-col items-center cursor-pointer"
-                                                onClick={() => handleManualStampToggle(dateStr)}
-                                                title="날짜를 클릭하여 도장을 복구/삭제 할 수 있습니다"
+                                                className="flex flex-col items-center"
                                             >
                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all ${stampStyle}`}>
                                                     {stampText}
@@ -1235,9 +1272,6 @@
                                 <div className="mt-4 flex justify-center gap-4 text-[10px] text-white/40">
                                     <div className="flex items-center gap-1"><span className="text-yellow-400">★</span> 60min</div>
                                     <div className="flex items-center gap-1"><span className="text-slate-300">☆</span> 30min</div>
-                                </div>
-                                <div className="mt-2 text-center text-[10px] text-[#FDA4AF] animate-pulse">
-                                    잃어버린 도장이 있다면 날짜를 클릭해서 복구하세요!
                                 </div>
                             </div>
                         </div>
@@ -1259,20 +1293,12 @@
                                         >
                                             <Sparkles size={16} /> <span className="hidden sm:inline">Inspo Notes</span><span className="sm:hidden">Notes</span>
                                         </button>
-                                        <button 
-                                            onClick={() => setActiveTab('ielts')}
-                                            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 sm:flex-none ${activeTab === 'ielts' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            <Camera size={16} /> <span className="hidden sm:inline">IELTS 묘사</span><span className="sm:hidden">IELTS</span>
-                                        </button>
                                     </div>
 
-                                    {activeTab !== 'ielts' && (
-                                        <button onClick={() => setHideEnglish(!hideEnglish)} className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-slate-800 text-white ring-4 ring-slate-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
-                                            {hideEnglish ? <EyeOff size={18}/> : <Eye size={18}/>}
-                                            {hideEnglish ? "Mode ON" : "Study Mode"}
-                                        </button>
-                                    )}
+                                    <button onClick={() => setHideEnglish(!hideEnglish)} className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-slate-800 text-white ring-4 ring-slate-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
+                                        {hideEnglish ? <EyeOff size={18}/> : <Eye size={18}/>}
+                                        {hideEnglish ? "Mode ON" : "Study Mode"}
+                                    </button>
                                 </div>
 
                                 {/* CONTENT SWITCH */}
@@ -1434,7 +1460,7 @@
                                             ))}
                                         </div>
                                     </>
-                                ) : activeTab === 'notes' ? (
+                                ) : (
                                     <>
                                          <div className="mb-8 p-6 bg-[#FFF1F2] rounded-2xl border border-[#FFE4E6]">
                                             <div className="flex justify-between items-center mb-4">
@@ -1442,6 +1468,9 @@
                                                     <StickyNote className="w-5 h-5"/>
                                                     Add New Note
                                                 </h3>
+                                                <span className="text-xs font-bold text-[#BE123C] bg-white px-3 py-1 rounded-full shadow-sm">
+                                                    총 {notes.length}개
+                                                </span>
                                             </div>
                                             <div className="flex flex-col gap-3">
                                                 <input 
@@ -1450,6 +1479,7 @@
                                                     onChange={(e) => setNewNoteEng(e.target.value)} 
                                                     placeholder="English Expression (ex: That hits the spot!)" 
                                                     className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-slate-800 font-medium"
+                                                    onKeyDown={(e) => e.key === 'Enter' && addNote()}
                                                 />
                                                 <div className="flex gap-2">
                                                     <input 
@@ -1458,6 +1488,7 @@
                                                         onChange={(e) => setNewNoteKor(e.target.value)} 
                                                         placeholder="Meaning / Context (ex: 딱 내가 원하던 거야!)" 
                                                         className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#BE123C] placeholder:text-[#BE123C]/40 outline-none text-slate-800"
+                                                        onKeyDown={(e) => e.key === 'Enter' && addNote()}
                                                     />
                                                     <button 
                                                         onClick={addNote} 
@@ -1466,8 +1497,139 @@
                                                         <Plus size={20} /> Add
                                                     </button>
                                                 </div>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-xs font-bold text-[#BE123C]/50">태그:</span>
+                                                    {['일상', '구동사'].map(tag => (
+                                                        <button 
+                                                            key={tag}
+                                                            onClick={() => setNewNoteTag(newNoteTag === tag ? "" : tag)}
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${newNoteTag === tag ? 'bg-[#BE123C] text-white shadow-sm' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`}
+                                                        >
+                                                            #{tag}
+                                                        </button>
+                                                    ))}
+                                                    <input 
+                                                        type="text" 
+                                                        value={newNoteTag} 
+                                                        onChange={(e) => setNewNoteTag(e.target.value)} 
+                                                        placeholder="직접 입력"
+                                                        className="w-24 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#BE123C] outline-none text-slate-600"
+                                                        onKeyDown={(e) => e.key === 'Enter' && addNote()}
+                                                        list="tag-suggestions"
+                                                    />
+                                                    <datalist id="tag-suggestions">
+                                                        {allTags.filter(t => t !== '일상' && t !== '구동사').map(t => <option key={t} value={t} />)}
+                                                    </datalist>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {/* 🔍 검색 + 태그 필터 + 도구 */}
+                                        <div className="mb-6 space-y-3">
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="text"
+                                                    value={searchQuery}
+                                                    onChange={(e) => { setSearchQuery(e.target.value); setNotesPage(1); }}
+                                                    placeholder="🔍 표현 검색 (영어 또는 한국어)"
+                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#BE123C] outline-none text-slate-700 font-medium placeholder:text-slate-400"
+                                                />
+                                                <button 
+                                                    onClick={generateRandomNotes}
+                                                    className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl hover:bg-amber-100 transition-colors font-bold text-sm flex items-center gap-1 whitespace-nowrap"
+                                                    title="랜덤으로 5개 표현 복습"
+                                                >
+                                                    🎲 복습
+                                                </button>
+                                                <button 
+                                                    onClick={exportNotesCSV}
+                                                    className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl hover:bg-emerald-100 transition-colors font-bold text-sm flex items-center gap-1 whitespace-nowrap"
+                                                    title="CSV로 내보내기"
+                                                >
+                                                    📥 Export
+                                                </button>
+                                            </div>
+                                            
+                                            {/* 태그 필터 */}
+                                            {allTags.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 items-center">
+                                                    <span className="text-xs font-bold text-slate-400">태그:</span>
+                                                    <button 
+                                                        onClick={() => { setSelectedTag(""); setNotesPage(1); }}
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${!selectedTag ? 'bg-[#BE123C] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                                    >
+                                                        전체
+                                                    </button>
+                                                    {allTags.map(tag => (
+                                                        <button 
+                                                            key={tag}
+                                                            onClick={() => { setSelectedTag(selectedTag === tag ? "" : tag); setNotesPage(1); }}
+                                                            className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${selectedTag === tag ? 'bg-[#BE123C] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                                        >
+                                                            #{tag}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {(searchQuery || selectedTag) && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-slate-500">
+                                                        필터 결과: <strong className="text-[#BE123C]">{filteredNotes.length}</strong>개
+                                                    </span>
+                                                    <button 
+                                                        onClick={() => { setSearchQuery(""); setSelectedTag(""); setNotesPage(1); }}
+                                                        className="text-xs text-slate-400 hover:text-red-400 transition-colors underline"
+                                                    >
+                                                        초기화
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* 🎲 랜덤 복습 모달 */}
+                                        {showRandomReview && randomNotes.length > 0 && (
+                                            <div className="mb-8 p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 relative">
+                                                <button 
+                                                    onClick={() => setShowRandomReview(false)}
+                                                    className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors"
+                                                >
+                                                    <X size={18}/>
+                                                </button>
+                                                <h3 className="font-bold text-amber-700 flex items-center gap-2 mb-4">
+                                                    <span className="text-xl">🎲</span> 오늘의 랜덤 복습 ({randomNotes.length}개)
+                                                </h3>
+                                                <div className="space-y-3">
+                                                    {randomNotes.map((note, idx) => (
+                                                        <div key={note.id} className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div className="flex-1">
+                                                                    <p className="text-base font-bold text-slate-800 mb-1">{note.eng}</p>
+                                                                    <p className="text-sm text-slate-600">{note.kor}</p>
+                                                                </div>
+                                                                <div className="flex items-center gap-1 shrink-0">
+                                                                    {note.tag && (
+                                                                        <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">#{note.tag}</span>
+                                                                    )}
+                                                                    <button 
+                                                                        onClick={() => speakText(note.eng)}
+                                                                        className="p-1 rounded-full hover:bg-amber-100 text-slate-400 hover:text-amber-600 transition-colors"
+                                                                    >
+                                                                        <Volume2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <button 
+                                                    onClick={generateRandomNotes}
+                                                    className="mt-4 w-full py-2 bg-amber-100 text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-200 transition-colors"
+                                                >
+                                                    🔄 다시 뽑기
+                                                </button>
+                                            </div>
+                                        )}
 
                                         <div className="space-y-6">
                                             {notes.length === 0 ? (
@@ -1481,9 +1643,19 @@
                                                     {currentNotes.map((note, idx) => (
                                                         <div key={note.id} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#BE123C] shadow-lg shadow-pink-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#FECDD3]'}`}>
                                                             <div className="flex justify-between items-start mb-2">
-                                                                <span className="text-[10px] font-bold text-[#BE123C] bg-[#FFF1F2] px-2 py-1 rounded-md">
-                                                                    {note.date}
-                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] font-bold text-[#BE123C] bg-[#FFF1F2] px-2 py-1 rounded-md">
+                                                                        {note.date}
+                                                                    </span>
+                                                                    {note.tag && (
+                                                                        <span 
+                                                                            className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-md cursor-pointer hover:bg-purple-100 transition-colors"
+                                                                            onClick={() => { setSelectedTag(note.tag); setNotesPage(1); }}
+                                                                        >
+                                                                            #{note.tag}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {editingNoteId === note.id ? (
                                                                         <div className="flex gap-2">
@@ -1556,12 +1728,20 @@
 
                                                                 {/* Korean Part */}
                                                                 {editingNoteId === note.id ? (
-                                                                    <div className="bg-slate-50 border border-purple-200 rounded-lg p-3 min-h-[80px] flex items-center">
+                                                                    <div className="bg-slate-50 border border-purple-200 rounded-lg p-3 min-h-[80px] flex flex-col gap-2">
                                                                         <textarea 
                                                                             value={editKor} 
                                                                             onChange={(e) => setEditKor(e.target.value)} 
-                                                                            className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none"
+                                                                            className="w-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none flex-1"
                                                                             rows={2}
+                                                                        />
+                                                                        <input 
+                                                                            type="text"
+                                                                            value={editTag}
+                                                                            onChange={(e) => setEditTag(e.target.value)}
+                                                                            placeholder="#태그"
+                                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-purple-300 outline-none text-slate-600"
+                                                                            list="tag-suggestions"
                                                                         />
                                                                     </div>
                                                                 ) : (
@@ -1576,7 +1756,7 @@
                                                     ))}
                                                     
                                                     {/* Pagination Controls */}
-                                                    {notes.length > NOTES_PER_PAGE && (
+                                                    {filteredNotes.length > NOTES_PER_PAGE && (
                                                         <div className="flex justify-center items-center gap-4 mt-8">
                                                             <button 
                                                                 onClick={() => paginate(Math.max(1, notesPage - 1))}
@@ -1598,150 +1778,6 @@
                                                         </div>
                                                     )}
                                                 </>
-                                            )}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* 🔥 새로 추가된 IELTS 묘사 연습 탭 */}
-                                        <div className="mb-8 p-6 bg-[#ECFDF5] rounded-2xl border border-[#A7F3D0]">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="font-bold text-emerald-700 flex items-center gap-2">
-                                                    <Camera className="w-5 h-5"/>
-                                                    IELTS Scene Description
-                                                </h3>
-                                            </div>
-                                            <p className="text-sm text-emerald-600 mb-6 font-medium">
-                                                사진을 보고 상황을 최대한 자세히 묘사해보세요. <br/>
-                                                <span className="opacity-80">(마이크 버튼을 눌러 스피킹을 연습하고, 모범 답안과 비교해보세요!)</span>
-                                            </p>
-                                            
-                                            <div className="flex flex-col lg:flex-row gap-6">
-                                                {/* Left: Image Viewer & Answer Toggle */}
-                                                <div className="flex-1 flex flex-col items-center">
-                                                    <div className="relative w-full aspect-video bg-slate-200 rounded-xl overflow-hidden shadow-inner group mb-3">
-                                                        <img 
-                                                            src={ieltsScenes[currentSceneIndex].url} 
-                                                            alt="scene" 
-                                                            className={`w-full h-full object-cover transition-all ${showModelAnswer ? 'blur-sm scale-105 opacity-50' : ''}`}
-                                                        />
-                                                        
-                                                        {showModelAnswer && (
-                                                            <div className="absolute inset-0 p-6 overflow-y-auto bg-black/60 text-white font-medium leading-relaxed flex items-center justify-center text-center">
-                                                                {ieltsScenes[currentSceneIndex].modelAnswer}
-                                                            </div>
-                                                        )}
-
-                                                        {/* Nav Controls */}
-                                                        <button 
-                                                            onClick={prevScene}
-                                                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors opacity-0 group-hover:opacity-100"
-                                                        >
-                                                            <ChevronLeft size={24} />
-                                                        </button>
-                                                        <button 
-                                                            onClick={nextScene}
-                                                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors opacity-0 group-hover:opacity-100"
-                                                        >
-                                                            <ChevronRight size={24} />
-                                                        </button>
-                                                    </div>
-                                                    
-                                                    <div className="w-full flex justify-between items-center">
-                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                                                            Scene {currentSceneIndex + 1} of {ieltsScenes.length}
-                                                        </p>
-                                                        <button 
-                                                            onClick={() => setShowModelAnswer(!showModelAnswer)}
-                                                            className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 ${showModelAnswer ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}
-                                                        >
-                                                            <MessageSquare size={14} />
-                                                            {showModelAnswer ? "Hide Answer" : "Show Model Answer"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right: Controls & Draft */}
-                                                <div className="w-full lg:w-1/3 flex flex-col gap-4">
-                                                    {/* Local Timer */}
-                                                    <div className="bg-white rounded-xl p-4 border border-emerald-100 flex flex-col items-center justify-center shadow-sm relative">
-                                                        <div className="text-4xl font-black text-emerald-600 tracking-tighter tabular-nums mb-3">
-                                                            {formatTime(ieltsTimeLeft)}
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <button 
-                                                                onClick={toggleIeltsTimer} 
-                                                                className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition-transform active:scale-95 ${isIeltsActive ? 'bg-orange-400 hover:bg-orange-500' : 'bg-emerald-500 hover:bg-emerald-600'}`}
-                                                                title="타이머 재생/일시정지"
-                                                            >
-                                                                {isIeltsActive ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
-                                                            </button>
-                                                            <button 
-                                                                onClick={resetIeltsTimer} 
-                                                                className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors active:scale-95"
-                                                                title="타이머 초기화 (2분)"
-                                                            >
-                                                                <RotateCcw size={16} />
-                                                            </button>
-                                                            <div className="w-px h-8 bg-slate-200 mx-1 my-auto"></div>
-                                                            {/* 🎙️ STT Mic Button */}
-                                                            <button 
-                                                                onClick={toggleRecording} 
-                                                                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-colors ${isRecording ? 'bg-red-500 text-white recording-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                                                                title="음성 인식 켜기/끄기"
-                                                            >
-                                                                <Mic size={18} />
-                                                            </button>
-                                                        </div>
-                                                        {isRecording && <span className="absolute top-2 right-3 text-[10px] font-bold text-red-500 animate-pulse flex items-center gap-1"><div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>REC</span>}
-                                                    </div>
-
-                                                    <textarea 
-                                                        value={sceneDraft}
-                                                        onChange={(e) => setSceneDraft(e.target.value)}
-                                                        placeholder="마이크를 누르고 말하면 여기에 자동으로 텍스트가 작성됩니다..."
-                                                        className="w-full flex-1 bg-white border border-emerald-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-emerald-400 outline-none resize-none font-medium text-slate-700 min-h-[120px]"
-                                                    />
-                                                    <button 
-                                                        onClick={saveIeltsPractice}
-                                                        className="bg-emerald-500 text-white w-full py-3 rounded-xl hover:bg-emerald-600 transition-colors font-bold flex items-center justify-center gap-2 shadow-sm"
-                                                    >
-                                                        <Save size={18} /> 스크립트 저장하기
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Saved Practices */}
-                                        <div className="space-y-6">
-                                            {savedScenes.length === 0 ? (
-                                                <div className="text-center py-12 text-slate-400">
-                                                    <Camera className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                                    <p>저장된 스피킹 묘사 기록이 없습니다.</p>
-                                                    <p className="text-sm mt-1">사진을 보고 나만의 문장을 만들어 저장해보세요!</p>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {savedScenes.map((scene) => (
-                                                        <div key={scene.id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
-                                                            <div className="h-32 bg-slate-200 relative">
-                                                                <img src={scene.imageUrl} className="w-full h-full object-cover opacity-80" alt="saved scene" />
-                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
-                                                                    <span className="text-white text-xs font-bold">{scene.date}</span>
-                                                                </div>
-                                                                <button 
-                                                                    onClick={() => deleteIeltsPractice(scene.id)}
-                                                                    className="absolute top-2 right-2 bg-white/20 hover:bg-red-500 text-white p-1.5 rounded-full transition-colors backdrop-blur-sm"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            </div>
-                                                            <div className="p-4">
-                                                                <p className="text-sm text-slate-700 whitespace-pre-wrap font-medium">{scene.script}</p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
                                             )}
                                         </div>
                                     </>
