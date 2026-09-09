@@ -485,6 +485,10 @@
             const [notesPage, setNotesPage] = useState(1);
             const NOTES_PER_PAGE = 10;
 
+            // ✨ 글로벌 하이라이트 모아보기를 위한 State 추가 ✨
+            const [globalHighlights, setGlobalHighlights] = useState([]);
+            const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
+
             useEffect(() => {
                 const initAuth = async () => {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -507,6 +511,47 @@
             useEffect(() => {
                 setRevealedIndices([]);
             }, [activeTab, currentDay, notesPage]); 
+
+            // --- ✨ 모든 Day의 하이라이트 문장을 모아오는 Effect ✨ ---
+            useEffect(() => {
+                const fetchGlobalHighlights = async () => {
+                    // 유저가 없고, 하이라이트 모드가 아니거나, 챌린지 탭이 아니면 패스
+                    if (!user || !showHighlightedOnly || activeTab !== 'challenge') return;
+                    
+                    setIsLoadingHighlights(true);
+                    const targetUserId = syncId || user.uid;
+                    const studyDataRef = collection(db, 'artifacts', appId, 'users', targetUserId, 'study_data');
+                    
+                    try {
+                        const snapshot = await getDocs(studyDataRef);
+                        let allHighlights = [];
+                        
+                        snapshot.forEach(doc => {
+                            const id = doc.id;
+                            if (id.startsWith('day_')) {
+                                const dayNum = parseInt(id.replace('day_', ''));
+                                const data = doc.data();
+                                if (data.sentences) {
+                                    data.sentences.forEach((s, idx) => {
+                                        if (s.highlight) {
+                                            allHighlights.push({ ...s, day: dayNum, originalIndex: idx });
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                        
+                        // 날짜 순, 그리고 문장 번호 순으로 정렬
+                        allHighlights.sort((a, b) => a.day !== b.day ? a.day - b.day : a.originalIndex - b.originalIndex);
+                        setGlobalHighlights(allHighlights);
+                    } catch (error) {
+                        console.error("Error fetching global highlights:", error);
+                    }
+                    setIsLoadingHighlights(false);
+                };
+
+                fetchGlobalHighlights();
+            }, [showHighlightedOnly, activeTab, user, syncId]);
 
             // --- Day Data 읽기 ---
             useEffect(() => {
@@ -735,7 +780,7 @@
                 saveDayData(newSentences, repetitionCount);
             };
 
-            const toggleHighlight = async (index, isNote = false, noteId = null) => {
+            const toggleHighlight = async (index, isNote = false, noteId = null, isGlobal = false) => {
                 if (isNote) {
                     if (!user) return;
                     const targetUserId = syncId || user.uid;
@@ -754,6 +799,35 @@
                         setNotes(newNotes);
                     } catch (error) {
                         console.error("Error toggling highlight:", error);
+                    }
+                } else if (isGlobal) {
+                    // ✨ 글로벌 모아보기 화면에서 하이라이트 해제할 때의 로직 ✨
+                    if (!user) return;
+                    const globalItem = globalHighlights[index];
+                    
+                    // 1. 글로벌 리스트(화면)에서 즉시 제거 (빠른 UI 반응)
+                    setGlobalHighlights(prev => prev.filter((_, i) => i !== index));
+                    
+                    // 2. 만약 현재 보고 있는 Day와 겹치면 로컬 상태도 업데이트
+                    if (globalItem.day === currentDay) {
+                        const newSentences = [...sentences];
+                        if (newSentences[globalItem.originalIndex]) {
+                            newSentences[globalItem.originalIndex].highlight = false;
+                            setSentences(newSentences);
+                        }
+                    }
+                    
+                    // 3. 해당 데이의 Firestore 문서 업데이트
+                    const targetUserId = syncId || user.uid;
+                    const dayDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', `day_${globalItem.day}`);
+                    const daySnap = await getDoc(dayDocRef);
+                    if (daySnap.exists()) {
+                        const data = daySnap.data();
+                        const newDaySentences = [...data.sentences];
+                        if (newDaySentences[globalItem.originalIndex]) {
+                            newDaySentences[globalItem.originalIndex].highlight = false;
+                            await setDoc(dayDocRef, { sentences: newDaySentences, repetitionCount: data.repetitionCount || 0, topic: data.topic || "" }, { merge: true });
+                        }
                     }
                 } else {
                     const newSentences = [...sentences];
@@ -1305,118 +1379,187 @@
 
                                 {/* CONTENT SWITCH */}
                                 {activeTab === 'challenge' ? (
-                                    <>
-                                        <div className="mb-8 p-6 bg-[#F5F3FF] rounded-2xl border border-[#DDD6FE]">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="font-bold text-[#5B21B6] flex items-center gap-2">
-                                                    <span>🍇</span>
-                                                    Repetition Check
-                                                </h3>
-                                                <span className="text-xs font-bold bg-white text-[#7C3AED] px-3 py-1 rounded-full shadow-sm">
-                                                    {repetitionCount} / 10 Sets
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center px-2">
-                                                {[...Array(10)].map((_, i) => (
-                                                    <div 
-                                                        key={i}
-                                                        onClick={() => toggleRepetition(i)}
-                                                        className={`
-                                                            w-7 h-7 md:w-10 md:h-10 rounded-full border-2 cursor-pointer transition-all duration-300 flex items-center justify-center transform hover:scale-110
-                                                            ${i < repetitionCount 
-                                                                ? 'bg-purple-50 border-[#7C3AED] shadow-md' 
-                                                                : 'bg-white border-[#C4B5FD] border-dashed'
-                                                            }
-                                                        `}
-                                                    >
-                                                        {i < repetitionCount ? <span className="text-lg md:text-2xl">🍇</span> : null}
-                                                    </div>
-                                                ))}
+                                    showHighlightedOnly ? (
+                                        /* ✨ 전체 하이라이트 모아보기 화면 (Global Highlights) ✨ */
+                                        <div className="space-y-6">
+                                            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 flex items-center justify-between">
+                                                <div className="flex items-center gap-2 font-bold">
+                                                    <Highlighter className="w-5 h-5"/>
+                                                    전체 하이라이트 모아보기 (총 {globalHighlights.length}개)
+                                                </div>
+                                                {isLoadingHighlights && <RefreshCw className="w-4 h-4 animate-spin text-yellow-600"/>}
                                             </div>
                                             
-                                            <div className="mt-6 text-center relative group">
-                                                <div className="inline-block bg-white px-4 py-1 rounded-full border border-purple-100 shadow-sm mb-2">
-                                                    <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Today's Topic</span>
-                                                </div>
-                                                
-                                                <div className="flex items-center justify-center gap-2">
-                                                    {isEditingTopic ? (
-                                                        <div className="flex items-center gap-2">
-                                                            <input 
-                                                                type="text"
-                                                                value={tempTopic}
-                                                                onChange={(e) => setTempTopic(e.target.value)}
-                                                                className="text-lg md:text-xl font-bold text-slate-700 bg-transparent border-b-2 border-purple-400 focus:outline-none text-center min-w-[200px] max-w-[80%]"
-                                                                autoFocus
-                                                                onKeyDown={(e) => {
-                                                                    if(e.key === 'Enter') {
-                                                                        setTopic(tempTopic);
-                                                                        saveDayData(sentences, repetitionCount, tempTopic);
-                                                                        setIsEditingTopic(false);
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <button 
-                                                                onClick={() => { 
-                                                                    setTopic(tempTopic); 
-                                                                    saveDayData(sentences, repetitionCount, tempTopic); 
-                                                                    setIsEditingTopic(false); 
-                                                                }} 
-                                                                className="text-green-500 hover:bg-green-50 p-1 rounded-md transition-colors"
-                                                            >
-                                                                <Check size={20}/>
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => setIsEditingTopic(false)} 
-                                                                className="text-red-400 hover:bg-red-50 p-1 rounded-md transition-colors"
-                                                            >
-                                                                <X size={20}/>
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <h3 
-                                                                className="text-lg md:text-xl font-bold text-slate-700 break-keep cursor-pointer hover:text-purple-600 transition-colors flex items-center gap-2"
-                                                                onClick={() => { setTempTopic(topic); setIsEditingTopic(true); }}
-                                                                title="클릭하여 주제 수정"
-                                                            >
-                                                                {topic}
-                                                                <Edit2 size={16} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                            </h3>
-                                                            {preloadedData[currentDay] && (
-                                                                <button 
-                                                                    onClick={loadSampleData}
-                                                                    className="text-slate-300 hover:text-purple-500 transition-colors p-2 opacity-0 group-hover:opacity-100"
-                                                                    title="최신 샘플 데이터로 덮어쓰기 (Refresh)"
-                                                                >
-                                                                    <RefreshCw size={16} />
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                <p className="text-xs text-[#8B5CF6] mt-2 opacity-70">
-                                                    주제에 맞춰 10문장을 큰 소리로 연습해보세요!
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-6">
-                                            {/* ✨ 하이라이트 문장이 하나도 없을 때 보여줄 메시지 ✨ */}
-                                            {showHighlightedOnly && !sentences.some(s => s.highlight) && (
+                                            {isLoadingHighlights ? (
+                                                <div className="text-center py-10 text-slate-400 font-bold">전체 데이터에서 찾는 중...</div>
+                                            ) : globalHighlights.length === 0 ? (
                                                 <div className="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100 shadow-sm animate-fade-in">
                                                     <Highlighter className="w-12 h-12 mx-auto mb-3 opacity-30 text-yellow-500" />
                                                     <p className="font-bold text-slate-500">강조(Highlight) 표시된 문장이 없습니다.</p>
-                                                    <p className="text-sm mt-1">각 문장 우측 상단의 형광펜 아이콘을 눌러 추가해보세요!</p>
+                                                    <p className="text-sm mt-1">학습 중 헷갈리는 문장에 형광펜 아이콘을 눌러 추가해보세요!</p>
                                                 </div>
+                                            ) : (
+                                                globalHighlights.map((item, idx) => (
+                                                    <div key={`global-${item.day}-${item.originalIndex}`} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
+                                                        <div className={`absolute -left-3 -top-3 px-3 py-1 rounded-full flex items-center justify-center font-bold text-xs shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-700 text-white'}`}>
+                                                            Day {item.day}
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2 mt-2">
+                                                            <div className="relative flex flex-col">
+                                                                <div className="flex justify-between items-end mb-1">
+                                                                    <label className={`text-xs font-bold block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button 
+                                                                            onClick={() => speakText(item.eng)}
+                                                                            className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#7C3AED] transition-colors"
+                                                                            title="듣기 (Listen)"
+                                                                        >
+                                                                            <Volume2 size={16} />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={() => toggleHighlight(idx, false, null, true)}
+                                                                            className="p-1 rounded-full hover:bg-slate-100 transition-colors text-yellow-500 bg-yellow-50"
+                                                                            title="하이라이트 해제"
+                                                                        >
+                                                                            <Highlighter size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div 
+                                                                    onClick={() => toggleReveal(`global-${idx}`)} 
+                                                                    className={`relative flex-1 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer 
+                                                                        ${hideEnglish && !revealedIndices.includes(`global-${idx}`) ? 'bg-slate-900' : 'bg-yellow-50'}
+                                                                    `}
+                                                                >
+                                                                    <textarea 
+                                                                        value={item.eng} 
+                                                                        readOnly
+                                                                        className={`w-full h-full bg-transparent border-none rounded-lg text-slate-800 font-bold text-lg p-3 focus:ring-0 outline-none resize-none transition-all duration-300 
+                                                                            ${hideEnglish && !revealedIndices.includes(`global-${idx}`) ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+                                                                        `} 
+                                                                        rows={3} 
+                                                                        disabled={hideEnglish && !revealedIndices.includes(`global-${idx}`)} 
+                                                                    />
+                                                                    {hideEnglish && !revealedIndices.includes(`global-${idx}`) && (
+                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                            <span className="text-4xl">🙈</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-wider">Meaning</label>
+                                                                <div className="bg-slate-50 rounded-lg p-3 flex-1">
+                                                                    <textarea value={item.kor} readOnly className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none font-medium leading-relaxed" rows={3}/>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
                                             )}
+                                        </div>
+                                    ) : (
+                                        /* 기존 Challenge 탭 내용 */
+                                        <>
+                                            <div className="mb-8 p-6 bg-[#F5F3FF] rounded-2xl border border-[#DDD6FE]">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h3 className="font-bold text-[#5B21B6] flex items-center gap-2">
+                                                        <span>🍇</span>
+                                                        Repetition Check
+                                                    </h3>
+                                                    <span className="text-xs font-bold bg-white text-[#7C3AED] px-3 py-1 rounded-full shadow-sm">
+                                                        {repetitionCount} / 10 Sets
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center px-2">
+                                                    {[...Array(10)].map((_, i) => (
+                                                        <div 
+                                                            key={i}
+                                                            onClick={() => toggleRepetition(i)}
+                                                            className={`
+                                                                w-7 h-7 md:w-10 md:h-10 rounded-full border-2 cursor-pointer transition-all duration-300 flex items-center justify-center transform hover:scale-110
+                                                                ${i < repetitionCount 
+                                                                    ? 'bg-purple-50 border-[#7C3AED] shadow-md' 
+                                                                    : 'bg-white border-[#C4B5FD] border-dashed'
+                                                                }
+                                                            `}
+                                                        >
+                                                            {i < repetitionCount ? <span className="text-lg md:text-2xl">🍇</span> : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                
+                                                <div className="mt-6 text-center relative group">
+                                                    <div className="inline-block bg-white px-4 py-1 rounded-full border border-purple-100 shadow-sm mb-2">
+                                                        <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Today's Topic</span>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        {isEditingTopic ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <input 
+                                                                    type="text"
+                                                                    value={tempTopic}
+                                                                    onChange={(e) => setTempTopic(e.target.value)}
+                                                                    className="text-lg md:text-xl font-bold text-slate-700 bg-transparent border-b-2 border-purple-400 focus:outline-none text-center min-w-[200px] max-w-[80%]"
+                                                                    autoFocus
+                                                                    onKeyDown={(e) => {
+                                                                        if(e.key === 'Enter') {
+                                                                            setTopic(tempTopic);
+                                                                            saveDayData(sentences, repetitionCount, tempTopic);
+                                                                            setIsEditingTopic(false);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <button 
+                                                                    onClick={() => { 
+                                                                        setTopic(tempTopic); 
+                                                                        saveDayData(sentences, repetitionCount, tempTopic); 
+                                                                        setIsEditingTopic(false); 
+                                                                    }} 
+                                                                    className="text-green-500 hover:bg-green-50 p-1 rounded-md transition-colors"
+                                                                >
+                                                                    <Check size={20}/>
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => setIsEditingTopic(false)} 
+                                                                    className="text-red-400 hover:bg-red-50 p-1 rounded-md transition-colors"
+                                                                >
+                                                                    <X size={20}/>
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <h3 
+                                                                    className="text-lg md:text-xl font-bold text-slate-700 break-keep cursor-pointer hover:text-purple-600 transition-colors flex items-center gap-2"
+                                                                    onClick={() => { setTempTopic(topic); setIsEditingTopic(true); }}
+                                                                    title="클릭하여 주제 수정"
+                                                                >
+                                                                    {topic}
+                                                                    <Edit2 size={16} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                </h3>
+                                                                {preloadedData[currentDay] && (
+                                                                    <button 
+                                                                        onClick={loadSampleData}
+                                                                        className="text-slate-300 hover:text-purple-500 transition-colors p-2 opacity-0 group-hover:opacity-100"
+                                                                        title="최신 샘플 데이터로 덮어쓰기 (Refresh)"
+                                                                    >
+                                                                        <RefreshCw size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
 
-                                            {sentences.map((item, idx) => {
-                                                // ✨ Highlight 모드가 켜져 있는데, 해당 항목에 하이라이트가 없으면 렌더링하지 않음
-                                                if (showHighlightedOnly && !item.highlight) return null;
+                                                    <p className="text-xs text-[#8B5CF6] mt-2 opacity-70">
+                                                        주제에 맞춰 10문장을 큰 소리로 연습해보세요!
+                                                    </p>
+                                                </div>
+                                            </div>
 
-                                                return (
+                                            <div className="space-y-6">
+                                                {sentences.map((item, idx) => (
                                                     <div key={idx} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
                                                         <div className={`absolute -left-3 -top-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</div>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2">
@@ -1472,10 +1615,10 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )
                                 ) : (
                                     <>
                                          <div className="mb-8 p-6 bg-[#FFF1F2] rounded-2xl border border-[#FFE4E6]">
