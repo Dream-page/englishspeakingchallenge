@@ -59,28 +59,23 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-challenge-app';
 
-        // 🌟 [핵심 버그 수정 1] 날짜 형식 정규화 및 에러 데이터 자동 치료 함수
+        // 🌟 날짜 형식 정규화 및 에러 데이터 자동 치료 함수
         const normalizeDates = (datesArray) => {
             if (!Array.isArray(datesArray)) return [];
             return datesArray.map(d => {
-                // 1. 과거의 순수 글자형 데이터였을 경우 -> 객체로 변환
                 if (typeof d === 'string') return { date: d, type: '60' };
-                
                 if (d && typeof d === 'object') {
-                    // 2. 오류로 인해 { date: {date: "2024-05-18", type: "60"}, type: "60"} 처럼 꼬여버린(중첩된) 데이터 치료
                     if (d.date && typeof d.date === 'object' && d.date.date) {
                         return { date: d.date.date, type: d.type || '60' };
                     }
-                    // 3. 정상적인 현재 형태 { date: "2024-05-18", type: "60" }
                     if (typeof d.date === 'string') {
                         return d;
                     }
                 }
                 return null;
-            }).filter(Boolean); // null 값 제거
+            }).filter(Boolean);
         };
 
-        // 🌟 [핵심 버그 수정 2] UTC(영국 기준) 오류를 방지하는 한국시간(Local) 기준 오늘 날짜 구하기
         const getLocalToday = () => {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -478,9 +473,11 @@
             const [repetitionCount, setRepetitionCount] = useState(0);
             const [silverAwarded, setSilverAwarded] = useState(false); 
 
-            // --- 🔍 검색 State ---
+            // --- 🔍 검색 & 필터 State ---
             const [searchQuery, setSearchQuery] = useState("");
             const [selectedTag, setSelectedTag] = useState("");
+            const [showHighlightedOnly, setShowHighlightedOnly] = useState(false); // ✨ 하이라이트 필터 상태 추가
+
             const [newNoteTag, setNewNoteTag] = useState("");
             const [showRandomReview, setShowRandomReview] = useState(false);
             const [randomNotes, setRandomNotes] = useState([]);
@@ -562,7 +559,6 @@
                              setTimerEndTime(null);
                              setIsActive(false);
                              setSilverAwarded(false);
-                             // 날짜가 바뀌었으므로 Firestore에도 리셋 상태를 저장
                              setDoc(globalDocRef, { 
                                  timerEndTime: null, 
                                  savedTimeLeft: 3600, 
@@ -571,10 +567,8 @@
                              }, { merge: true });
                         } else {
                              if (data.timerEndTime) {
-                                 // 타이머 endTime이 이미 과거인지 확인
                                  const now = Date.now();
                                  if (data.timerEndTime <= now) {
-                                     // 이미 시간이 다 지남 → 완료 처리
                                      setTimeLeft(0);
                                      setTimerEndTime(null);
                                      setIsActive(false);
@@ -604,7 +598,6 @@
                 return () => unsubscribe();
             }, [user, syncId]);
 
-            // --- Save Helpers ---
             const saveDayData = async (newSentences, newRepCount, newTopic = topic) => {
                 if (!user) return;
                 const targetUserId = syncId || user.uid;
@@ -655,7 +648,6 @@
                 }
             };
 
-            // --- Background Timer Logic ---
             useEffect(() => {
                 let interval = null;
                 if (isActive && timerEndTime) {
@@ -685,7 +677,7 @@
                 return () => clearInterval(interval);
             }, [isActive, timerEndTime, silverAwarded, user, syncId]);
 
-            // --- 🌟 [핵심 버그 수정 3] 자정 자동 리셋: 페이지가 열려있어도 날짜가 바뀌면 타이머 리셋 ---
+            // 자정 자동 리셋
             useEffect(() => {
                 if (!user) return;
                 const lastCheckedDate = { current: getLocalToday() };
@@ -693,7 +685,6 @@
                 const midnightCheck = setInterval(() => {
                     const now = getLocalToday();
                     if (now !== lastCheckedDate.current) {
-                        // 날짜가 바뀜 → 타이머 리셋
                         lastCheckedDate.current = now;
                         setTimeLeft(3600);
                         setTimerEndTime(null);
@@ -701,7 +692,7 @@
                         setSilverAwarded(false);
                         saveGlobalData({ timerEndTime: null, savedTimeLeft: 3600, silverAwarded: false });
                     }
-                }, 30000); // 30초마다 날짜 변경 체크
+                }, 30000);
 
                 return () => clearInterval(midnightCheck);
             }, [user, syncId]);
@@ -797,7 +788,6 @@
                 const globalDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'study_data', 'global_data');
                 
                 try {
-                    // 🌟 [핵심 버그 수정 4] Firestore에서 최신 데이터를 먼저 읽고 추가 (데이터 유실 방지)
                     const docSnap = await getDoc(globalDocRef);
                     let latestNotes = [];
                     if (docSnap.exists() && docSnap.data().notes) {
@@ -816,7 +806,6 @@
                     const newNoteList = [newNote, ...latestNotes];
                     await setDoc(globalDocRef, { notes: newNoteList }, { merge: true });
                     
-                    // 로컬 state도 업데이트 (onSnapshot이 다시 가져올 때까지의 즉시 반영)
                     setNotes(newNoteList);
                     setNewNoteEng("");
                     setNewNoteKor("");
@@ -885,7 +874,7 @@
                     alert("수정 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
                 }
             };
-            
+
             const loadSampleData = () => {
                 if (!preloadedData[currentDay]) {
                     alert("이 날짜의 샘플 데이터가 없습니다.");
@@ -941,7 +930,7 @@
                 setViewDate(newDate);
             };
 
-            // --- 🔍 검색 & 태그 필터 적용 ---
+            // --- 🔍 검색 & 태그 필터 + ✨ 하이라이트 필터 적용 ---
             const allTags = [...new Set(notes.filter(n => n.tag).map(n => n.tag))];
             
             const filteredNotes = notes.filter(note => {
@@ -950,7 +939,8 @@
                       (note.kor && note.kor.includes(searchQuery))
                     : true;
                 const matchesTag = selectedTag ? note.tag === selectedTag : true;
-                return matchesSearch && matchesTag;
+                const matchesHighlight = showHighlightedOnly ? note.highlight : true; // ✨ 필터 적용
+                return matchesSearch && matchesTag && matchesHighlight;
             });
 
             const indexOfLastNote = notesPage * NOTES_PER_PAGE;
@@ -965,11 +955,10 @@
                 
                 const sortedDates = [...completedDates]
                     .map(d => d.date)
-                    .sort((a, b) => b.localeCompare(a)); // 최신순 정렬
+                    .sort((a, b) => b.localeCompare(a));
                 
                 const unique = [...new Set(sortedDates)];
                 
-                // 현재 연속 streak 계산
                 let currentStreak = 0;
                 const today = getLocalToday();
                 const yesterday = (() => {
@@ -978,7 +967,6 @@
                     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 })();
                 
-                // 오늘 또는 어제부터 시작
                 let startIdx = unique.indexOf(today);
                 if (startIdx === -1) startIdx = unique.indexOf(yesterday);
                 
@@ -995,7 +983,6 @@
                     }
                 }
                 
-                // 최장 streak 계산
                 let bestStreak = 0;
                 let tempStreak = 1;
                 const sortedAsc = [...unique].sort();
@@ -1280,6 +1267,7 @@
                         <div className="lg:col-span-8">
                             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/50 min-h-full">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                    
                                     <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
                                         <button 
                                             onClick={() => setActiveTab('challenge')}
@@ -1295,10 +1283,24 @@
                                         </button>
                                     </div>
 
-                                    <button onClick={() => setHideEnglish(!hideEnglish)} className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-slate-800 text-white ring-4 ring-slate-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
-                                        {hideEnglish ? <EyeOff size={18}/> : <Eye size={18}/>}
-                                        {hideEnglish ? "Mode ON" : "Study Mode"}
-                                    </button>
+                                    {/* ✨ Highlight Filter & Study Mode Buttons ✨ */}
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        <button
+                                            onClick={() => setShowHighlightedOnly(!showHighlightedOnly)}
+                                            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${showHighlightedOnly ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-400 border border-transparent' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}
+                                            title="강조(형광펜) 표시된 문장만 모아보기"
+                                        >
+                                            <Highlighter size={18}/>
+                                            <span className="hidden sm:inline">{showHighlightedOnly ? "Highlights On" : "Highlights"}</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setHideEnglish(!hideEnglish)} 
+                                            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 ${hideEnglish ? 'bg-slate-800 text-white ring-4 ring-slate-200 border border-transparent' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}
+                                        >
+                                            {hideEnglish ? <EyeOff size={18}/> : <Eye size={18}/>}
+                                            <span className="whitespace-nowrap">{hideEnglish ? "Mode ON" : "Study Mode"}</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* CONTENT SWITCH */}
@@ -1401,63 +1403,77 @@
                                         </div>
 
                                         <div className="space-y-6">
-                                            {sentences.map((item, idx) => (
-                                                <div key={idx} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
-                                                    <div className={`absolute -left-3 -top-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</div>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2">
-                                                        <div className="relative flex flex-col">
-                                                            <div className="flex justify-between items-end mb-1">
-                                                                <label className={`text-xs font-bold block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
-                                                                <div className="flex items-center gap-2">
-                                                                    <button 
-                                                                        onClick={() => speakText(item.eng)}
-                                                                        className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#7C3AED] transition-colors"
-                                                                        title="듣기 (Listen)"
-                                                                    >
-                                                                        <Volume2 size={16} />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={() => toggleHighlight(idx)}
-                                                                        className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${item.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
-                                                                        title="어려운 문장 하이라이트"
-                                                                    >
-                                                                        <Highlighter size={14} />
-                                                                    </button>
+                                            {/* ✨ 하이라이트 문장이 하나도 없을 때 보여줄 메시지 ✨ */}
+                                            {showHighlightedOnly && !sentences.some(s => s.highlight) && (
+                                                <div className="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100 shadow-sm animate-fade-in">
+                                                    <Highlighter className="w-12 h-12 mx-auto mb-3 opacity-30 text-yellow-500" />
+                                                    <p className="font-bold text-slate-500">강조(Highlight) 표시된 문장이 없습니다.</p>
+                                                    <p className="text-sm mt-1">각 문장 우측 상단의 형광펜 아이콘을 눌러 추가해보세요!</p>
+                                                </div>
+                                            )}
+
+                                            {sentences.map((item, idx) => {
+                                                // ✨ Highlight 모드가 켜져 있는데, 해당 항목에 하이라이트가 없으면 렌더링하지 않음
+                                                if (showHighlightedOnly && !item.highlight) return null;
+
+                                                return (
+                                                    <div key={idx} className={`group relative bg-white border rounded-2xl p-4 transition-all duration-300 ${hideEnglish ? 'border-[#7C3AED] shadow-lg shadow-purple-100 scale-[1.01]' : 'border-slate-100 hover:shadow-md hover:border-[#C4B5FD]'}`}>
+                                                        <div className={`absolute -left-3 -top-3 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-colors ${hideEnglish ? 'bg-[#7C3AED] text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-2">
+                                                            <div className="relative flex flex-col">
+                                                                <div className="flex justify-between items-end mb-1">
+                                                                    <label className={`text-xs font-bold block uppercase tracking-wider transition-colors ${hideEnglish ? 'text-[#7C3AED]' : 'text-slate-400'}`}>English</label>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button 
+                                                                            onClick={() => speakText(item.eng)}
+                                                                            className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#7C3AED] transition-colors"
+                                                                            title="듣기 (Listen)"
+                                                                        >
+                                                                            <Volume2 size={16} />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={() => toggleHighlight(idx)}
+                                                                            className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${item.highlight ? 'text-yellow-500 bg-yellow-50' : 'text-slate-300'}`}
+                                                                            title="어려운 문장 하이라이트"
+                                                                        >
+                                                                            <Highlighter size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div 
+                                                                    onClick={() => toggleReveal(idx)} 
+                                                                    className={`relative flex-1 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer 
+                                                                        ${hideEnglish && !revealedIndices.includes(idx) ? 'bg-slate-900' : (item.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
+                                                                    `}
+                                                                >
+                                                                    <textarea 
+                                                                        value={item.eng} 
+                                                                        onChange={(e) => updateSentence(idx, 'eng', e.target.value)} 
+                                                                        placeholder={`Day ${currentDay} 문장 (영어)`} 
+                                                                        className={`w-full h-full bg-transparent border-none rounded-lg text-slate-800 font-bold text-lg p-3 focus:ring-0 outline-none resize-none transition-all duration-300 
+                                                                            ${hideEnglish && !revealedIndices.includes(idx) ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+                                                                        `} 
+                                                                        rows={3} 
+                                                                        disabled={hideEnglish && !revealedIndices.includes(idx)} 
+                                                                    />
+                                                                    {hideEnglish && !revealedIndices.includes(idx) && (
+                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                            <span className="text-4xl">🙈</span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
-                                                            
-                                                            <div 
-                                                                onClick={() => toggleReveal(idx)} 
-                                                                className={`relative flex-1 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer 
-                                                                    ${hideEnglish && !revealedIndices.includes(idx) ? 'bg-slate-900' : (item.highlight ? 'bg-yellow-50' : 'bg-slate-50')}
-                                                                `}
-                                                            >
-                                                                <textarea 
-                                                                    value={item.eng} 
-                                                                    onChange={(e) => updateSentence(idx, 'eng', e.target.value)} 
-                                                                    placeholder={`Day ${currentDay} 문장 (영어)`} 
-                                                                    className={`w-full h-full bg-transparent border-none rounded-lg text-slate-800 font-bold text-lg p-3 focus:ring-0 outline-none resize-none transition-all duration-300 
-                                                                        ${hideEnglish && !revealedIndices.includes(idx) ? 'opacity-0 pointer-events-none' : 'opacity-100'}
-                                                                    `} 
-                                                                    rows={3} 
-                                                                    disabled={hideEnglish && !revealedIndices.includes(idx)} 
-                                                                />
-                                                                {hideEnglish && !revealedIndices.includes(idx) && (
-                                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                        <span className="text-4xl">🙈</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex flex-col">
-                                                            <label className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-wider">Meaning</label>
-                                                            <div className="bg-slate-50 rounded-lg p-3 flex-1">
-                                                                <textarea value={item.kor} onChange={(e) => updateSentence(idx, 'kor', e.target.value)} placeholder="한국어 해석" className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none font-medium leading-relaxed" rows={3}/>
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-wider">Meaning</label>
+                                                                <div className="bg-slate-50 rounded-lg p-3 flex-1">
+                                                                    <textarea value={item.kor} onChange={(e) => updateSentence(idx, 'kor', e.target.value)} placeholder="한국어 해석" className="w-full h-full bg-transparent border-none text-slate-700 text-base focus:ring-0 outline-none resize-none font-medium leading-relaxed" rows={3}/>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </>
                                 ) : (
@@ -1572,13 +1588,13 @@
                                                 </div>
                                             )}
 
-                                            {(searchQuery || selectedTag) && (
+                                            {(searchQuery || selectedTag || showHighlightedOnly) && (
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs text-slate-500">
                                                         필터 결과: <strong className="text-[#BE123C]">{filteredNotes.length}</strong>개
                                                     </span>
                                                     <button 
-                                                        onClick={() => { setSearchQuery(""); setSelectedTag(""); setNotesPage(1); }}
+                                                        onClick={() => { setSearchQuery(""); setSelectedTag(""); setShowHighlightedOnly(false); setNotesPage(1); }}
                                                         className="text-xs text-slate-400 hover:text-red-400 transition-colors underline"
                                                     >
                                                         초기화
@@ -1643,11 +1659,11 @@
                                         )}
 
                                         <div className="space-y-6">
-                                            {notes.length === 0 ? (
+                                            {filteredNotes.length === 0 ? (
                                                 <div className="text-center py-12 text-slate-400">
                                                     <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                                    <p>아직 기록된 표현이 없어요.</p>
-                                                    <p className="text-sm mt-1">릴스나 미드에서 본 멋진 표현을 추가해보세요!</p>
+                                                    <p>{notes.length === 0 ? "아직 기록된 표현이 없어요." : "조건에 맞는 표현이 없습니다."}</p>
+                                                    {notes.length === 0 && <p className="text-sm mt-1">릴스나 미드에서 본 멋진 표현을 추가해보세요!</p>}
                                                 </div>
                                             ) : (
                                                 <>
